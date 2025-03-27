@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { he } from 'date-fns/locale';
 import { TextField } from '@mui/material';
-import { format, isValid } from 'date-fns';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { heIL } from '@mui/material/locale';
+import dayjs from 'dayjs';
+import 'dayjs/locale/he'; // Import Hebrew locale
 
 // Create theme with Hebrew locale
 const theme = createTheme(
@@ -47,14 +47,20 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
   helperText = '',
   className = '',
 }) => {
-  // Convert Gregorian date to Hebrew date representation
+  // Convert to dayjs object if value exists
+  const dayjsValue = value ? dayjs(value) : null;
+  
+  // Handle dayjs to Date conversion
+  const handleDateChange = (newValue: dayjs.Dayjs | null) => {
+    onChange(newValue ? newValue.toDate() : null);
+  };
+
+  // Get Hebrew date representation
   const getHebrewDateText = (date: Date | null) => {
-    if (!date || !isValid(date)) return '';
+    if (!date) return '';
     
-    // This is a basic conversion - for a full Hebrew calendar conversion
-    // a specialized library would be better
     try {
-      // Format: create a basic Hebrew representation
+      // Format using Intl.DateTimeFormat with Hebrew calendar
       return new Intl.DateTimeFormat('he-IL', {
         calendar: 'hebrew',
         day: 'numeric',
@@ -72,40 +78,28 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
   
   return (
     <ThemeProvider theme={theme}>
-      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
         <div className={`${className} flex flex-col`}>
           <DatePicker
-            value={value}
-            onChange={onChange}
+            value={dayjsValue}
+            onChange={handleDateChange}
             disabled={disabled}
-            format="dd/MM/yyyy"
+            format="DD/MM/YYYY"
+            openTo="year"
             views={['year', 'month', 'day']}
-            showDaysOutsideCurrentMonth
-            localeText={{
-              previousYear: 'שנה קודמת',
-              nextYear: 'שנה הבאה',
-            }}
-            slots={{
-              textField: (params) => (
-                <TextField 
-                  {...params}
-                  fullWidth
-                  error={error}
-                  sx={{ 
-                    direction: 'rtl',
-                    '& .MuiInputBase-input': { 
-                      textAlign: 'right',
-                    }
-                  }}
-                />
-              ),
-            }}
             slotProps={{
               textField: {
                 placeholder: 'הכנס תאריך',
+                error: error,
                 InputLabelProps: { 
                   shrink: true,
                 },
+                sx: { 
+                  direction: 'rtl',
+                  '& .MuiInputBase-input': { 
+                    textAlign: 'right',
+                  }
+                }
               },
               actionBar: {
                 actions: ['clear'],
