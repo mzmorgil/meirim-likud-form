@@ -1,28 +1,23 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
+import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RefreshCw, Calendar as CalendarIcon, User, Mail, Phone, UserRound, Home, Hash, Signature } from 'lucide-react';
-import { format } from 'date-fns';
-import { he } from 'date-fns/locale';
+import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
 
-// Validator for Israeli ID numbers
 const isValidIsraeliID = (id: string) => {
   const cleanId = String(id).trim();
   if (cleanId.length > 9 || cleanId.length < 5 || isNaN(Number(cleanId))) return false;
 
-  // Pad string with zeros up to 9 digits
   const paddedId = cleanId.length < 9 ? ("00000000" + cleanId).slice(-9) : cleanId;
 
   return Array
@@ -40,7 +35,6 @@ const maritalStatusOptions = [
   { value: 'א', label: 'אלמן/ה', fullLabel: 'אלמן/ה' },
 ];
 
-// Current year for validation
 const currentYear = new Date().getFullYear();
 
 const formSchema = z.object({
@@ -100,7 +94,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     },
   });
 
-  // Generate automatic signature when name changes
   React.useEffect(() => {
     const firstName = form.watch('firstName');
     const lastName = form.watch('lastName');
@@ -122,13 +115,11 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Use a cursive-like font for the signature
       ctx.font = 'italic 32px "Segoe Script", "Brush Script MT", cursive';
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      // Combine first and last name for signature
       const fullName = `${firstName} ${lastName}`;
       ctx.fillText(fullName, canvas.width / 2, canvas.height / 2);
       
@@ -164,7 +155,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* תעודת זהות */}
               <FormField
                 control={form.control}
                 name="idNumber"
@@ -190,7 +180,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* שם פרטי */}
               <FormField
                 control={form.control}
                 name="firstName"
@@ -214,7 +203,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* שם משפחה */}
               <FormField
                 control={form.control}
                 name="lastName"
@@ -238,7 +226,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* שם האב */}
               <FormField
                 control={form.control}
                 name="fatherName"
@@ -262,7 +249,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* תאריך לידה - Hebrew calendar */}
               <FormField
                 control={form.control}
                 name="birthDate"
@@ -272,46 +258,21 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       <CalendarIcon className="h-4 w-4" />
                       תאריך לידה
                     </FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy", { locale: he })
-                            ) : (
-                              <span>בחר תאריך</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          locale={he}
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <HebrewDatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={isLoading}
+                        error={!!form.formState.errors.birthDate}
+                        helperText={form.formState.errors.birthDate?.message?.toString()}
+                        className="w-full"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* מצב משפחתי */}
               <FormField
                 control={form.control}
                 name="maritalStatus"
@@ -341,7 +302,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* ארץ לידה */}
               <FormField
                 control={form.control}
                 name="birthCountry"
@@ -362,7 +322,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* שנת עליה */}
               <FormField
                 control={form.control}
                 name="immigrationYear"
@@ -386,7 +345,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* כתובת */}
               <FormField
                 control={form.control}
                 name="address"
@@ -410,7 +368,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* ישוב */}
               <FormField
                 control={form.control}
                 name="city"
@@ -431,7 +388,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* מיקוד */}
               <FormField
                 control={form.control}
                 name="zipCode"
@@ -454,7 +410,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* טלפון נייד */}
               <FormField
                 control={form.control}
                 name="mobile"
@@ -479,7 +434,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* דואר אלקטרוני */}
               <FormField
                 control={form.control}
                 name="email"
@@ -505,7 +459,6 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
               />
             </div>
 
-            {/* חתימה */}
             <FormField
               control={form.control}
               name="signature"
@@ -554,11 +507,10 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
               )}
             />
 
-            {/* Signature Dialog */}
             <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>הוסף חתימה</DialogTitle>
+                  <DialogTitle>הוסף ��תימה</DialogTitle>
                   <DialogDescription>
                     חתום באמצעות העכבר או באצבע במכשיר מגע
                   </DialogDescription>
