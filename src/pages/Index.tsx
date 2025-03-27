@@ -1,18 +1,40 @@
 
-import React, { useState } from 'react';
-import PDFViewer from '@/components/PDFViewer';
+import React, { useState, useEffect } from 'react';
+import { addTextToPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
+import PDFPreview from '@/components/PDFPreview';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black.pdf';
 
 const Index = () => {
   const [userName, setUserName] = useState<string>('');
   const [showPdfPreview, setShowPdfPreview] = useState(false);
-
-  const handleFormSubmit = (name: string) => {
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const handleFormSubmit = async (name: string) => {
     setUserName(name);
-    setShowPdfPreview(true);
+    setIsProcessing(true);
+    
+    try {
+      // Process the PDF to add the text
+      const modifiedPdfBlob = await addTextToPdf(PDF_URL, name);
+      const objectUrl = URL.createObjectURL(modifiedPdfBlob);
+      setPdfUrl(objectUrl);
+      setShowPdfPreview(true);
+    } catch (error) {
+      console.error('Failed to process PDF:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  // Clean up object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    };
+  }, [pdfUrl]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8">
@@ -33,14 +55,17 @@ const Index = () => {
         
         <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
           {showPdfPreview ? (
-            <PDFViewer 
-              pdfUrl={PDF_URL} 
-              userName={userName} 
-              onBack={() => setShowPdfPreview(false)} 
-              previewMode={true} 
+            <PDFPreview 
+              pdfUrl={pdfUrl}
+              formData={{
+                firstName: userName,
+                lastName: "",
+                id: ""
+              }}
+              onBack={() => setShowPdfPreview(false)}
             />
           ) : (
-            <NameForm onSubmit={handleFormSubmit} />
+            <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
           )}
         </div>
         

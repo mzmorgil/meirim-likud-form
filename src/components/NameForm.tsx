@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { RefreshCw } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -18,9 +19,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface NameFormProps {
   onSubmit: (name: string) => void;
+  isLoading?: boolean;
 }
 
-const NameForm: React.FC<NameFormProps> = ({ onSubmit }) => {
+const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -51,6 +53,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit }) => {
                       placeholder="Enter your name" 
                       {...field} 
                       className="transition-all focus:ring-2 focus:ring-primary"
+                      disabled={isLoading}
                     />
                   </FormControl>
                   <FormMessage />
@@ -59,8 +62,19 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit }) => {
             />
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button type="submit" className="w-full btn-hover-effect">
-              Generate PDF
+            <Button 
+              type="submit" 
+              className="w-full btn-hover-effect"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Generate PDF'
+              )}
             </Button>
           </CardFooter>
         </form>
