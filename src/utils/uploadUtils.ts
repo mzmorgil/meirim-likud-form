@@ -1,7 +1,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-// Service account information copied from the provided code
+// Service account information
 const serviceAccount = {
   "type": "service_account",
   "project_id": "mzm-org-il",
@@ -53,39 +53,41 @@ export const generateUploadContext = (idNumber: string): string => {
 
 // Generate JWT using the service account private key
 const generateJWT = () => {
-  // We need to dynamically import KJUR because it's not a proper ES module
-  return import('jsrsasign').then(KJUR => {
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-      iss: serviceAccount.client_email,
-      scope: "https://www.googleapis.com/auth/cloud-platform",
-      aud: serviceAccount.token_uri,
-      iat: now,
-      exp: now + 3600 // Token expires in 1 hour
-    };
-    const header = { alg: "RS256", typ: "JWT" };
-    const sHeader = JSON.stringify(header);
-    const sPayload = JSON.stringify(payload);
-    const privateKey = serviceAccount.private_key;
-    return KJUR.KJUR.jws.JWS.sign("RS256", sHeader, sPayload, privateKey);
-  });
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/cloud-platform",
+    aud: serviceAccount.token_uri,
+    iat: now,
+    exp: now + 3600 // Token expires in 1 hour
+  };
+  const header = { alg: "RS256", typ: "JWT" };
+  
+  // Use KJUR directly from window since it's loaded globally by jsrsasign
+  return window.KJUR.jws.JWS.sign("RS256", JSON.stringify(header), JSON.stringify(payload), serviceAccount.private_key);
 };
 
 // Obtain an access token from Google
 const getAccessToken = async (): Promise<string> => {
-  const jwt = await generateJWT();
-  const response = await fetch(serviceAccount.token_uri, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-  });
-  
-  if (!response.ok) {
-    throw new Error("Failed to get access token");
+  try {
+    const jwt = generateJWT();
+    const response = await fetch(serviceAccount.token_uri, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
+    }
+    
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error("Error getting access token:", error);
+    throw error;
   }
-  
-  const data = await response.json();
-  return data.access_token;
 };
 
 // Upload a file to Google Cloud Storage
@@ -95,11 +97,18 @@ export const uploadFileToGCS = async (
   contentType: string
 ): Promise<string> => {
   try {
-    // Get access token and upload file
-    const accessToken = await getAccessToken();
-    const objectName = `uploads/${fileName}`;
-    const url = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?uploadType=media&name=${objectName}`;
+    console.log(`Uploading file: ${fileName} (${contentType})`);
     
+    // Get access token
+    const accessToken = await getAccessToken();
+    
+    // Encode the filename for URL
+    const encodedObjectName = encodeURIComponent(`uploads/${fileName}`);
+    const url = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?uploadType=media&name=${encodedObjectName}`;
+    
+    console.log(`Upload URL: ${url}`);
+    
+    // Upload the file
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -109,12 +118,17 @@ export const uploadFileToGCS = async (
       body: file
     });
 
+    // Handle response
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Upload response: ${response.status} ${errorText}`);
+      throw new Error(`Upload failed: ${response.status} ${errorText}`);
     }
     
     const data = await response.json();
-    return data.selfLink;
+    console.log("Upload successful:", data);
+    
+    return data.selfLink || `https://storage.googleapis.com/${bucketName}/uploads/${fileName}`;
   } catch (error) {
     console.error("Upload error:", error);
     throw error;
@@ -127,7 +141,9 @@ export const uploadFormFiles = async (
   formData: any
 ): Promise<{ pdfUrl: string, jsonUrl: string }> => {
   try {
+    // Generate unique identifier
     const uploadContext = generateUploadContext(formData.idNumber);
+    console.log("Upload context:", uploadContext);
     
     // Get client IP and browser info
     const [clientIp, browserInfo] = await Promise.all([
@@ -146,28 +162,34 @@ export const uploadFormFiles = async (
     };
     
     // Convert form data to JSON blob
-    const jsonBlob = new Blob([JSON.stringify(enhancedFormData)], { type: 'application/json' });
+    const jsonBlob = new Blob([JSON.stringify(enhancedFormData, null, 2)], { type: 'application/json' });
     
-    // Upload both files concurrently
-    const [pdfUrl, jsonUrl] = await Promise.all([
-      uploadFileToGCS(pdfBlob, `${uploadContext}.pdf`, 'application/pdf'),
-      uploadFileToGCS(jsonBlob, `${uploadContext}.json`, 'application/json')
-    ]);
+    // Upload both files one after another (not concurrently to avoid race conditions)
+    console.log("Uploading PDF...");
+    const pdfUrl = await uploadFileToGCS(
+      pdfBlob, 
+      `${uploadContext}.pdf`, 
+      'application/pdf'
+    );
     
-    // Add the selfLink reference to the metadata
+    console.log("Uploading JSON...");
+    // Add the PDF URL to the JSON metadata before uploading
     const finalMetadata = {
       ...enhancedFormData,
       metadata: {
         ...enhancedFormData.metadata,
-        pdfSelfLink: pdfUrl,
-        jsonSelfLink: jsonUrl,
+        pdfUrl: pdfUrl,
         objectPath: `uploads/${uploadContext}`
       }
     };
     
-    // Update the JSON file with the selfLink references
-    const updatedJsonBlob = new Blob([JSON.stringify(finalMetadata)], { type: 'application/json' });
-    await uploadFileToGCS(updatedJsonBlob, `${uploadContext}.json`, 'application/json');
+    // Upload the updated JSON
+    const updatedJsonBlob = new Blob([JSON.stringify(finalMetadata, null, 2)], { type: 'application/json' });
+    const jsonUrl = await uploadFileToGCS(
+      updatedJsonBlob, 
+      `${uploadContext}.json`, 
+      'application/json'
+    );
     
     return { pdfUrl, jsonUrl };
   } catch (error) {

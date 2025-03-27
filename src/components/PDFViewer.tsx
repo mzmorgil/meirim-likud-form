@@ -32,19 +32,21 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         
         // Create a dummy form data object with the username
         const formData = {
-          idNumber: '',
+          idNumber: '123456789',
           firstName: userName.split(' ')[0] || '',
           lastName: userName.split(' ')[1] || '',
-          fatherName: '',
+          fatherName: 'אב',
           birthDate: new Date(),
-          maritalStatus: '',
-          birthCountry: '',
-          address: '',
-          city: '',
-          mobile: '',
-          email: '',
-          signature: '',
+          maritalStatus: 'רווק/ה',
+          birthCountry: 'ישראל',
+          address: 'רחוב הדוגמה 123',
+          city: 'תל אביב',
+          mobile: '050-1234567',
+          email: 'example@example.com',
+          signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAACoCAMAAABt9SM9AAAAA1BMVEX///+nxBvIAAAAR0lEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAO8GxYgAAb0jQ/cAAAAASUVORK5CYII=',
         };
+        
+        console.log('Processing PDF with form data in PDFViewer:', formData);
         
         // Process the PDF to add the text
         const modifiedPdfBlob = await addFormDataToPdf(pdfUrl, formData);
