@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { addTextToPdf } from '../utils/pdfUtils';
+import { addTextToPdf, downloadPdf } from '../utils/pdfUtils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { RefreshCw, ArrowLeft } from 'lucide-react';
+import { RefreshCw, Download } from 'lucide-react';
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -21,6 +21,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [modifiedPdfUrl, setModifiedPdfUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         
         // Process the PDF to add the text
         const modifiedPdfBlob = await addTextToPdf(pdfUrl, userName);
+        setPdfBlob(modifiedPdfBlob);
         const objectUrl = URL.createObjectURL(modifiedPdfBlob);
         setModifiedPdfUrl(objectUrl);
         
@@ -53,9 +55,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     setIsLoading(false);
   };
 
+  const handleDownload = () => {
+    if (pdfBlob) {
+      downloadPdf(pdfBlob, `${userName}-document.pdf`);
+      toast.success('PDF downloaded successfully');
+    }
+  };
+
   return (
     <div className="flex flex-col items-center w-full">
-      <div className="w-full h-[calc(100vh-200px)] relative glass-card overflow-hidden mb-6">
+      <div className="w-full h-[calc(100vh-200px)] relative bg-background/50 rounded-lg overflow-hidden mb-6">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
             <div className="flex flex-col items-center">
@@ -71,7 +80,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <iframe
             ref={iframeRef}
             src={modifiedPdfUrl}
-            className="w-full h-full border-0 pdf-container"
+            className="w-full h-full border-0"
             title="Modified PDF"
             onLoad={handleIframeLoad}
           />
@@ -79,11 +88,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       </div>
       
       <Button 
-        onClick={onBack}
-        className="btn-hover-effect flex items-center gap-2 px-6 py-2 rounded-full"
+        onClick={handleDownload}
+        className="flex items-center gap-2 px-6 py-2 rounded-full"
+        variant="default"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Form
+        <Download className="w-4 h-4" />
+        Download PDF
       </Button>
     </div>
   );

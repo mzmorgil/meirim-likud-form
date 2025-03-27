@@ -14,10 +14,6 @@ const Index = () => {
     setShowPdfPreview(true);
   };
 
-  const handleBackToForm = () => {
-    setShowPdfPreview(false);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8">
       <div className="max-w-6xl mx-auto">
@@ -30,7 +26,7 @@ const Index = () => {
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
             {showPdfPreview 
-              ? `Previewing PDF with "${userName}" added to it` 
+              ? `Preview PDF with "${userName}" added to it` 
               : "Enter your name to add it to the PDF document"}
           </p>
         </header>
@@ -40,7 +36,7 @@ const Index = () => {
             <PDFViewer 
               pdfUrl={PDF_URL} 
               userName={userName} 
-              onBack={handleBackToForm} 
+              onBack={() => setShowPdfPreview(false)} 
               previewMode={true} 
             />
           ) : (
