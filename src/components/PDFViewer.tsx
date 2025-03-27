@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { addTextToPdf, downloadPdf } from '../utils/pdfUtils';
+import { addFormDataToPdf, downloadPdf } from '../utils/pdfUtils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { RefreshCw, Download } from 'lucide-react';
@@ -30,8 +30,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         setIsLoading(true);
         setIsProcessing(true);
         
+        // Create a dummy form data object with the username
+        const formData = {
+          idNumber: '',
+          firstName: userName.split(' ')[0] || '',
+          lastName: userName.split(' ')[1] || '',
+          fatherName: '',
+          birthDate: new Date(),
+          maritalStatus: '',
+          birthCountry: '',
+          address: '',
+          city: '',
+          mobile: '',
+          email: '',
+          signature: '',
+        };
+        
         // Process the PDF to add the text
-        const modifiedPdfBlob = await addTextToPdf(pdfUrl, userName);
+        const modifiedPdfBlob = await addFormDataToPdf(pdfUrl, formData);
         setPdfBlob(modifiedPdfBlob);
         const objectUrl = URL.createObjectURL(modifiedPdfBlob);
         setModifiedPdfUrl(objectUrl);
