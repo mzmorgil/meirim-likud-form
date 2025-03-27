@@ -1,8 +1,7 @@
-
 import React from 'react';
 import PDFViewer from '@/components/PDFViewer';
 
-const PDF_URL = 'https://lkd.org.il/wp-content/uploads/2022/01/uc-register-to-likud.pdf';
+const PDF_URL = 'https://storage.googleapis.com/mzm-org-il-public/uc-register-to-likud-black.pdf';
 
 const Index = () => {
   return (
