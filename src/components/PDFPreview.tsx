@@ -1,9 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { downloadPdf } from "@/utils/pdfUtils";
 import { uploadFormFiles } from "@/utils/uploadUtils";
 import { useState } from "react";
+import PDFViewer from "@/components/PDFViewer";
 
 interface PDFPreviewProps {
   pdfUrl: string | null;
@@ -114,15 +116,15 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden my-4 bg-white w-full" style={{height: "280px"}}>
-        {pdfUrl && (
+      {pdfUrl && (
+        <div className="border rounded-lg overflow-hidden my-4 bg-white w-full" style={{height: "280px"}}>
           <iframe 
             src={`${pdfUrl}#view=FitH&toolbar=0&navpanes=0&scrollbar=0`} 
             className="w-full h-full" 
             title="PDF Preview"
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <Button 
         variant="default" 

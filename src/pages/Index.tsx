@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
 import PDFPreview from '@/components/PDFPreview';
+import PDFViewer from '@/components/PDFViewer';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 
@@ -90,7 +92,7 @@ const Index = () => {
             <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
           )}
           
-          {currentScreen === 'preview' && formData && (
+          {currentScreen === 'preview' && formData && pdfUrl && (
             <PDFPreview 
               pdfUrl={pdfUrl}
               pdfBlob={pdfBlob}

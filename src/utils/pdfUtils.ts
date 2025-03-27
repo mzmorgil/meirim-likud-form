@@ -98,6 +98,17 @@ export const addFormDataToPdf = async (
       ? formData.birthDate.toLocaleDateString('he-IL')
       : String(formData.birthDate);
     
+    // Map of marital status codes to full names
+    const maritalStatusMap: Record<string, string> = {
+      'ר': 'רווק/ה',
+      'נ': 'נשוי/אה',
+      'ג': 'גרוש/ה',
+      'א': 'אלמן/ה'
+    };
+    
+    // Get the full marital status text if it's a code
+    const maritalStatusText = maritalStatusMap[formData.maritalStatus] || formData.maritalStatus;
+    
     // Add text fields to the PDF one by one
     console.log('Adding ID number to PDF');
     await addTextToPdfCanvas(firstPage, formData.idNumber, FORM_FIELDS.idNumber);
@@ -115,7 +126,7 @@ export const addFormDataToPdf = async (
     await addTextToPdfCanvas(firstPage, formattedBirthDate, FORM_FIELDS.birthDate);
     
     console.log('Adding marital status to PDF');
-    await addTextToPdfCanvas(firstPage, formData.maritalStatus, FORM_FIELDS.maritalStatus);
+    await addTextToPdfCanvas(firstPage, maritalStatusText, FORM_FIELDS.maritalStatus);
     
     console.log('Adding birth country to PDF');
     await addTextToPdfCanvas(firstPage, formData.birthCountry, FORM_FIELDS.birthCountry);

@@ -8,6 +8,22 @@ import { RefreshCw, Download } from 'lucide-react';
 interface PDFViewerProps {
   pdfUrl: string;
   userName: string;
+  formData: {
+    idNumber: string;
+    firstName: string;
+    lastName: string;
+    fatherName: string;
+    birthDate: Date;
+    maritalStatus: string;
+    birthCountry: string;
+    immigrationYear?: string;
+    address: string;
+    city: string;
+    zipCode?: string;
+    mobile: string;
+    email: string;
+    signature: string;
+  };
   onBack: () => void;
   previewMode?: boolean;
 }
@@ -15,6 +31,7 @@ interface PDFViewerProps {
 const PDFViewer: React.FC<PDFViewerProps> = ({ 
   pdfUrl, 
   userName, 
+  formData,
   onBack, 
   previewMode = true 
 }) => {
@@ -30,25 +47,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         setIsLoading(true);
         setIsProcessing(true);
         
-        // Create a dummy form data object with the username
-        const formData = {
-          idNumber: '123456789',
-          firstName: userName.split(' ')[0] || '',
-          lastName: userName.split(' ')[1] || '',
-          fatherName: 'אב',
-          birthDate: new Date(),
-          maritalStatus: 'רווק/ה',
-          birthCountry: 'ישראל',
-          address: 'רחוב הדוגמה 123',
-          city: 'תל אביב',
-          mobile: '050-1234567',
-          email: 'example@example.com',
-          signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAACoCAMAAABt9SM9AAAAA1BMVEX///+nxBvIAAAAR0lEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAO8GxYgAAb0jQ/cAAAAASUVORK5CYII=',
-        };
+        console.log('Processing PDF with actual form data in PDFViewer:', formData);
         
-        console.log('Processing PDF with form data in PDFViewer:', formData);
-        
-        // Process the PDF to add the text
+        // Process the PDF with actual form data
         const modifiedPdfBlob = await addFormDataToPdf(pdfUrl, formData);
         setPdfBlob(modifiedPdfBlob);
         const objectUrl = URL.createObjectURL(modifiedPdfBlob);
@@ -67,7 +68,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     };
     
     processAndDisplayPdf();
-  }, [pdfUrl, userName]);
+  }, [pdfUrl, formData]);
 
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -75,7 +76,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const handleDownload = () => {
     if (pdfBlob) {
-      downloadPdf(pdfBlob, `${userName}-document.pdf`);
+      downloadPdf(pdfBlob, `${formData.firstName}-${formData.lastName}-document.pdf`);
       toast.success('PDF downloaded successfully');
     }
   };
