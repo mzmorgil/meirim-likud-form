@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { RefreshCw } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
+    message: "השם חייב להכיל לפחות 2 תווים.",
   }),
 });
 
@@ -35,9 +35,9 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto animate-fade-up">
+    <Card className="w-full max-w-md mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Enter Your Name</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">הזן את שמך</CardTitle>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -47,13 +47,14 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>שם</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Enter your name" 
+                      placeholder="הכנס את שמך" 
                       {...field} 
-                      className="transition-all focus:ring-2 focus:ring-primary"
+                      className="transition-all focus:ring-2 focus:ring-primary text-right"
                       disabled={isLoading}
+                      dir="rtl"
                     />
                   </FormControl>
                   <FormMessage />
@@ -69,11 +70,11 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
             >
               {isLoading ? (
                 <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                  מעבד...
                 </>
               ) : (
-                'Generate PDF'
+                'צור PDF'
               )}
             </Button>
           </CardFooter>

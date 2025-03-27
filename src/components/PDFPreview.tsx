@@ -19,7 +19,7 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
     
     const link = document.createElement("a");
     link.href = pdfUrl;
-    link.download = `${formData.firstName}-${formData.lastName}-document.pdf`;
+    link.download = `${formData.firstName}-מסמך.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

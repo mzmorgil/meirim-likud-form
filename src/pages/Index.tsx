@@ -37,19 +37,19 @@ const Index = () => {
   }, [pdfUrl]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
         <header className="mb-12 text-center">
           <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
-            PDF EDITOR
+            עורך PDF
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
-            PDF Text Modifier
+            מעבד טקסט ל-PDF
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
             {showPdfPreview 
-              ? `Preview PDF with "${userName}" added to it` 
-              : "Enter your name to add it to the PDF document"}
+              ? `צפייה בקדימון של ה-PDF עם "${userName}" מוסף אליו` 
+              : "הזן את שמך כדי להוסיף אותו למסמך ה-PDF"}
           </p>
         </header>
         
@@ -71,7 +71,7 @@ const Index = () => {
         
         <footer className="mt-16 text-center text-sm text-muted-foreground">
           <p className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            This tool demonstrates PDF modification using pdf-lib.
+            כלי זה מדגים עריכת PDF באמצעות pdf-lib.
           </p>
         </footer>
       </div>
