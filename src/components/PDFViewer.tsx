@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { addTextToPdf, downloadPdf } from '../utils/pdfUtils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { FileDown, RefreshCw, AlertTriangle } from 'lucide-react';
+import { FileDown, RefreshCw } from 'lucide-react';
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -12,7 +12,6 @@ interface PDFViewerProps {
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [hasError, setHasError] = useState(false);
   const [modifiedPdfUrl, setModifiedPdfUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -21,7 +20,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
       try {
         setIsLoading(true);
         setIsProcessing(true);
-        setHasError(false);
         
         // Process the PDF to add the text
         const modifiedPdfBlob = await addTextToPdf(pdfUrl);
@@ -34,8 +32,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
         };
       } catch (error) {
         console.error('Failed to process PDF:', error);
-        toast.error('Failed to process PDF. Using fallback PDF.');
-        setHasError(true);
+        toast.error('Failed to process PDF. Please try again.');
       } finally {
         setIsProcessing(false);
       }
@@ -71,10 +68,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
     setIsLoading(false);
   };
 
-  const handleRetry = () => {
-    window.location.reload();
-  };
-
   return (
     <div className="flex flex-col items-center w-full">
       <div className="w-full h-[calc(100vh-200px)] relative glass-card overflow-hidden mb-6">
@@ -85,20 +78,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
               <p className="text-sm text-muted-foreground animate-pulse-subtle">
                 {isProcessing ? 'Processing PDF...' : 'Loading PDF...'}
               </p>
-            </div>
-          </div>
-        )}
-        
-        {hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
-            <div className="flex flex-col items-center text-center p-4">
-              <AlertTriangle className="w-8 h-8 text-destructive mb-2" />
-              <p className="text-sm mb-4">
-                Error loading the PDF due to CORS restrictions. A blank PDF with the text has been created instead.
-              </p>
-              <Button onClick={handleRetry} variant="outline" size="sm">
-                Retry
-              </Button>
             </div>
           </div>
         )}

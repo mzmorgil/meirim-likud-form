@@ -8,47 +8,13 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
  */
 export const addTextToPdf = async (pdfUrl: string): Promise<Blob> => {
   try {
-    // Use a pre-defined sample PDF if the external PDF cannot be fetched due to CORS
-    let pdfBytes: ArrayBuffer;
-    
-    try {
-      // Try to fetch the PDF with regular mode first
-      const pdfResponse = await fetch(pdfUrl);
-      if (!pdfResponse.ok) {
-        throw new Error('Failed to fetch PDF');
-      }
-      pdfBytes = await pdfResponse.arrayBuffer();
-    } catch (error) {
-      console.log('Failed to fetch PDF with standard mode, trying no-cors or using sample PDF');
-      
-      try {
-        // Try with no-cors mode as a fallback
-        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(pdfUrl)}`;
-        const proxyResponse = await fetch(corsProxyUrl);
-        
-        if (!proxyResponse.ok) {
-          throw new Error('Failed to fetch PDF via proxy');
-        }
-        
-        pdfBytes = await proxyResponse.arrayBuffer();
-      } catch (proxyError) {
-        // If both approaches fail, create a blank PDF as fallback
-        console.log('Using blank PDF as fallback');
-        const pdfDoc = await PDFDocument.create();
-        const page = pdfDoc.addPage([600, 800]);
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        
-        page.drawText('Unable to load original PDF due to CORS restrictions.', {
-          x: 50,
-          y: 700,
-          size: 12,
-          font,
-          color: rgb(0, 0, 0),
-        });
-        
-        return new Blob([await pdfDoc.save()], { type: 'application/pdf' });
-      }
+    // Fetch the PDF
+    const pdfResponse = await fetch(pdfUrl);
+    if (!pdfResponse.ok) {
+      throw new Error('Failed to fetch PDF');
     }
+    
+    const pdfBytes = await pdfResponse.arrayBuffer();
     
     // Load the PDF document
     const pdfDoc = await PDFDocument.load(pdfBytes);
