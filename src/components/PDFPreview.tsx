@@ -32,51 +32,52 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
   };
 
   return (
-    <div className="glass p-8 rounded-2xl shadow-lg animate-fade-in" dir="rtl">
-      <div className="space-y-2 mb-6">
-        <div className="inline-block px-3 py-1 rounded-full bg-secondary text-xs font-medium tracking-wider mb-2 animate-slide-in">
+    <div className="glass p-4 rounded-2xl shadow-lg animate-fade-in max-w-md mx-auto" dir="rtl">
+      <div className="space-y-1 mb-3">
+        <div className="inline-block px-2 py-0.5 rounded-full bg-secondary text-xs font-medium tracking-wider mb-1 animate-slide-in">
           תצוגה מקדימה
         </div>
-        <h1 className="text-2xl font-medium">תצוגה מקדימה של המסמך</h1>
-        <p className="text-muted-foreground text-sm">
-          המסמך שלך מוכן להורדה או העלאה
-        </p>
+        <h1 className="text-lg font-medium">המסמך שלך מוכן</h1>
       </div>
 
-      <div className="border rounded-lg overflow-hidden my-4 aspect-[1/1.4] bg-white">
+      <div className="border rounded-lg overflow-hidden my-2 aspect-[1/1.2] bg-white max-h-[280px]">
         {pdfUrl && (
           <iframe 
-            src={pdfUrl} 
+            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
             className="w-full h-full" 
             title="PDF Preview"
           />
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-6">
+      <Button 
+        variant="default" 
+        onClick={handleUpload}
+        className="w-full mt-3 transition-all duration-300 ease-apple hover:bg-primary/90"
+        size="lg"
+      >
+        <Upload className="ml-2 h-5 w-5" /> העלאה לענן
+      </Button>
+      
+      <div className="grid grid-cols-2 gap-2 mt-2">
         <Button 
           variant="outline"
           onClick={onBack}
           className="transition-all duration-300 ease-apple hover:bg-secondary"
+          size="sm"
         >
-          <ArrowLeft className="ml-2 h-4 w-4" /> חזרה
+          <ArrowLeft className="ml-1 h-3 w-3" /> חזרה
         </Button>
         
         <Button 
+          variant="outline"
           onClick={handleDownload}
-          className="transition-all duration-300 ease-apple hover:scale-[1.02] active:scale-[0.98]"
+          className="transition-all duration-300 ease-apple"
+          size="sm"
         >
-          <Download className="ml-2 h-4 w-4" /> הורדה
+          <Download className="ml-1 h-3 w-3" /> הורדה
         </Button>
       </div>
-      
-      <Button 
-        variant="outline" 
-        onClick={handleUpload}
-        className="w-full mt-4 border-dashed transition-all duration-300 ease-apple hover:bg-secondary/50"
-      >
-        <Upload className="ml-2 h-4 w-4" /> העלאה לענן (בקרוב)
-      </Button>
     </div>
   );
 };
