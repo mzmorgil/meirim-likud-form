@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -33,15 +32,10 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   const [isUploading, setIsUploading] = useState(false);
 
   const handleDownload = () => {
-    if (!pdfUrl) return;
+    if (!pdfBlob) return;
     
-    // Use the downloadPdf utility
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = `התפקדות-לליכוד-${formData.firstName}-${formData.lastName}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Use the downloadPdf utility with the blob
+    downloadPdf(pdfBlob, `התפקדות-לליכוד-${formData.firstName}-${formData.lastName}.pdf`);
     toast.success("המסמך הורד בהצלחה");
   };
 

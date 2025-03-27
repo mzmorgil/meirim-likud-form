@@ -18,6 +18,32 @@ const serviceAccount = {
 
 const bucketName = "meirim-likud-join";
 
+// Get client IP address (best effort)
+const getClientIp = async (): Promise<string> => {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip;
+  } catch (error) {
+    console.error('Failed to get client IP:', error);
+    return 'unknown';
+  }
+};
+
+// Get browser information
+const getBrowserInfo = (): Record<string, string> => {
+  return {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    cookiesEnabled: navigator.cookieEnabled.toString(),
+    screenResolution: `${window.screen.width}x${window.screen.height}`,
+    windowSize: `${window.innerWidth}x${window.innerHeight}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezoneOffset: new Date().getTimezoneOffset().toString(),
+  };
+};
+
 // Generate the upload context identifier in the required format
 export const generateUploadContext = (idNumber: string): string => {
   const timestamp = new Date().toISOString();
@@ -103,14 +129,45 @@ export const uploadFormFiles = async (
   try {
     const uploadContext = generateUploadContext(formData.idNumber);
     
+    // Get client IP and browser info
+    const [clientIp, browserInfo] = await Promise.all([
+      getClientIp(),
+      Promise.resolve(getBrowserInfo())
+    ]);
+    
+    // Enhance form data with client information
+    const enhancedFormData = {
+      ...formData,
+      metadata: {
+        ipAddress: clientIp,
+        browserInfo,
+        timestamp: new Date().toISOString(),
+      }
+    };
+    
     // Convert form data to JSON blob
-    const jsonBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
+    const jsonBlob = new Blob([JSON.stringify(enhancedFormData)], { type: 'application/json' });
     
     // Upload both files concurrently
     const [pdfUrl, jsonUrl] = await Promise.all([
       uploadFileToGCS(pdfBlob, `${uploadContext}.pdf`, 'application/pdf'),
       uploadFileToGCS(jsonBlob, `${uploadContext}.json`, 'application/json')
     ]);
+    
+    // Add the selfLink reference to the metadata
+    const finalMetadata = {
+      ...enhancedFormData,
+      metadata: {
+        ...enhancedFormData.metadata,
+        pdfSelfLink: pdfUrl,
+        jsonSelfLink: jsonUrl,
+        objectPath: `uploads/${uploadContext}`
+      }
+    };
+    
+    // Update the JSON file with the selfLink references
+    const updatedJsonBlob = new Blob([JSON.stringify(finalMetadata)], { type: 'application/json' });
+    await uploadFileToGCS(updatedJsonBlob, `${uploadContext}.json`, 'application/json');
     
     return { pdfUrl, jsonUrl };
   } catch (error) {

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { addTextToPdf, downloadPdf } from '@/utils/pdfUtils';
+import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
 import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
@@ -37,9 +36,8 @@ const Index = () => {
     setIsProcessing(true);
     
     try {
-      // Process the PDF to add the text
-      const fullName = `${data.firstName} ${data.lastName}`;
-      const modifiedPdfBlob = await addTextToPdf(PDF_URL, fullName);
+      // Process the PDF to add all form data
+      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, data);
       setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
