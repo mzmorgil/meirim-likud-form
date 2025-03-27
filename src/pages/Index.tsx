@@ -1,7 +1,8 @@
+
 import React from 'react';
 import PDFViewer from '@/components/PDFViewer';
 
-const PDF_URL = 'https://storage.googleapis.com/mzm-org-il-public/uc-register-to-likud-black.pdf';
+const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black.pdf';
 
 const Index = () => {
   return (
