@@ -94,25 +94,32 @@ export const addFormDataToPdf = async (
       ? formData.birthDate.toLocaleDateString('he-IL')
       : String(formData.birthDate);
     
+    // Create a canvas for text rendering (for Hebrew support)
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to create canvas context');
+    }
+    
     // Add each form field to the PDF
     await Promise.all([
-      addTextFieldToPdf(pdfDoc, firstPage, formData.idNumber, FORM_FIELDS.idNumber),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.firstName, FORM_FIELDS.firstName),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.lastName, FORM_FIELDS.lastName),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.fatherName, FORM_FIELDS.fatherName),
-      addTextFieldToPdf(pdfDoc, firstPage, formattedBirthDate, FORM_FIELDS.birthDate),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.maritalStatus, FORM_FIELDS.maritalStatus),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.birthCountry, FORM_FIELDS.birthCountry),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.idNumber, FORM_FIELDS.idNumber),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.firstName, FORM_FIELDS.firstName),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.lastName, FORM_FIELDS.lastName),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.fatherName, FORM_FIELDS.fatherName),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formattedBirthDate, FORM_FIELDS.birthDate),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.maritalStatus, FORM_FIELDS.maritalStatus),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.birthCountry, FORM_FIELDS.birthCountry),
       formData.immigrationYear
-        ? addTextFieldToPdf(pdfDoc, firstPage, formData.immigrationYear, FORM_FIELDS.immigrationYear)
+        ? addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.immigrationYear, FORM_FIELDS.immigrationYear)
         : Promise.resolve(),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.address, FORM_FIELDS.address),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.city, FORM_FIELDS.city),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.address, FORM_FIELDS.address),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.city, FORM_FIELDS.city),
       formData.zipCode
-        ? addTextFieldToPdf(pdfDoc, firstPage, formData.zipCode, FORM_FIELDS.zipCode)
+        ? addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.zipCode, FORM_FIELDS.zipCode)
         : Promise.resolve(),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.mobile, FORM_FIELDS.mobile),
-      addTextFieldToPdf(pdfDoc, firstPage, formData.email, FORM_FIELDS.email),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.mobile, FORM_FIELDS.mobile),
+      addTextFieldToPdf(pdfDoc, firstPage, ctx, formData.email, FORM_FIELDS.email),
       // Add signature image
       addSignatureToPdf(pdfDoc, firstPage, formData.signature, FORM_FIELDS.signature),
     ]);
@@ -134,19 +141,13 @@ export const addFormDataToPdf = async (
 const addTextFieldToPdf = async (
   pdfDoc: PDFDocument,
   page: any,
+  ctx: CanvasRenderingContext2D,
   text: string,
   position?: FormPosition
 ): Promise<void> => {
   if (!position || !text) return;
   
   const fontSize = position.fontSize || 12;
-  
-  // Create a new canvas element inside the function scope
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('Failed to create canvas context');
-  }
   
   // Set canvas properties
   const canvasWidth = 500;

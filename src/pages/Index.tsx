@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -23,14 +22,6 @@ interface FormData {
   mobile: string;
   email: string;
   signature: string;
-  // Browser metadata to be added behind the scenes
-  _metadata?: {
-    ip?: string;
-    userAgent?: string;
-    headers?: Record<string, string>;
-    timestamp: string;
-    selfLink?: string;
-  };
 }
 
 const Index = () => {
@@ -41,22 +32,12 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   
   const handleFormSubmit = async (data: FormData) => {
-    // Add browser metadata
-    const enrichedData = {
-      ...data,
-      _metadata: {
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-        // We'll fetch IP in the uploadUtils later
-      }
-    };
-    
-    setFormData(enrichedData);
+    setFormData(data);
     setIsProcessing(true);
     
     try {
       // Process the PDF to add all form data
-      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, enrichedData);
+      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, data);
       setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
