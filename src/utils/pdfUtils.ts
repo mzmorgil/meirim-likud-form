@@ -28,21 +28,52 @@ export const addTextToPdf = async (pdfUrl: string, name: string): Promise<Blob> 
     
     const firstPage = pages[0];
     
-    // Get font and set text properties
-    const font = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
-    const textSize = 36;
-    const text = name || 'Hello World';
-    
     // Get page dimensions
     const { width, height } = firstPage.getSize();
     
-    // Add text to the center of the first page
-    firstPage.drawText(text, {
-      x: width / 2 - font.widthOfTextAtSize(text, textSize) / 2,
-      y: height / 2,
-      size: textSize,
-      font,
-      color: rgb(1, 0, 0), // Red color
+    // Create a custom font for Hebrew - using a font embedding technique
+    // For Hebrew support, we need to embed the text as an image, since we can't use
+    // StandardFonts with Hebrew characters
+    
+    // Create a canvas element to render the text
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to create canvas context');
+    }
+    
+    // Set canvas size and font properties
+    canvas.width = width * 0.8; // 80% of page width
+    canvas.height = 100;
+    const fontSize = 36;
+    ctx.font = `${fontSize}px Arial, sans-serif`;
+    ctx.fillStyle = 'rgb(255, 0, 0)'; // Red color
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Draw text on canvas
+    ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+    
+    // Convert canvas to image data URL
+    const imgData = canvas.toDataURL('image/png');
+    
+    // Remove the data URL prefix to get just the base64 content
+    const base64Data = imgData.replace(/^data:image\/(png|jpg);base64,/, '');
+    
+    // Embed the image into the PDF
+    const textImage = await pdfDoc.embedPng(base64Data);
+    
+    // Calculate position to center the image
+    const imgDims = textImage.scale(1); // Get scaled dimensions
+    const xPos = (width - imgDims.width) / 2;
+    const yPos = height / 2;
+    
+    // Draw the image on the page
+    firstPage.drawImage(textImage, {
+      x: xPos,
+      y: yPos,
+      width: imgDims.width,
+      height: imgDims.height,
     });
     
     // Save the modified PDF
