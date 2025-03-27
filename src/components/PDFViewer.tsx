@@ -1,15 +1,23 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { addTextToPdf, downloadPdf } from '../utils/pdfUtils';
+import { addTextToPdf } from '../utils/pdfUtils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { FileDown, RefreshCw } from 'lucide-react';
+import { RefreshCw, ArrowLeft } from 'lucide-react';
 
 interface PDFViewerProps {
   pdfUrl: string;
+  userName: string;
+  onBack: () => void;
+  previewMode?: boolean;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ 
+  pdfUrl, 
+  userName, 
+  onBack, 
+  previewMode = true 
+}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [modifiedPdfUrl, setModifiedPdfUrl] = useState<string | null>(null);
@@ -22,7 +30,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
         setIsProcessing(true);
         
         // Process the PDF to add the text
-        const modifiedPdfBlob = await addTextToPdf(pdfUrl);
+        const modifiedPdfBlob = await addTextToPdf(pdfUrl, userName);
         const objectUrl = URL.createObjectURL(modifiedPdfBlob);
         setModifiedPdfUrl(objectUrl);
         
@@ -39,30 +47,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
     };
     
     processAndDisplayPdf();
-  }, [pdfUrl]);
-
-  const handleDownload = async () => {
-    try {
-      if (!modifiedPdfUrl) {
-        toast.error('PDF not ready for download yet');
-        return;
-      }
-      
-      const response = await fetch(modifiedPdfUrl);
-      const blob = await response.blob();
-      
-      // Extract the original filename from the URL
-      const urlParts = pdfUrl.split('/');
-      const originalFilename = urlParts[urlParts.length - 1];
-      const downloadFilename = `modified-${originalFilename}`;
-      
-      downloadPdf(blob, downloadFilename);
-      toast.success('PDF downloaded successfully');
-    } catch (error) {
-      console.error('Failed to download PDF:', error);
-      toast.error('Failed to download PDF. Please try again.');
-    }
-  };
+  }, [pdfUrl, userName]);
 
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -94,12 +79,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
       </div>
       
       <Button 
-        onClick={handleDownload}
-        disabled={!modifiedPdfUrl || isLoading}
+        onClick={onBack}
         className="btn-hover-effect flex items-center gap-2 px-6 py-2 rounded-full"
       >
-        <FileDown className="w-4 h-4" />
-        Download Modified PDF
+        <ArrowLeft className="w-4 h-4" />
+        Back to Form
       </Button>
     </div>
   );

@@ -2,11 +2,12 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 /**
- * Adds red italic "Hello World" text to a PDF document
+ * Adds the user's name in red italic text to a PDF document
  * @param pdfUrl URL of the PDF to modify
+ * @param name User's name to add to the PDF
  * @returns Blob of the modified PDF
  */
-export const addTextToPdf = async (pdfUrl: string): Promise<Blob> => {
+export const addTextToPdf = async (pdfUrl: string, name: string): Promise<Blob> => {
   try {
     // Fetch the PDF
     const pdfResponse = await fetch(pdfUrl);
@@ -30,7 +31,7 @@ export const addTextToPdf = async (pdfUrl: string): Promise<Blob> => {
     // Get font and set text properties
     const font = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
     const textSize = 36;
-    const text = 'Hello World';
+    const text = name || 'Hello World';
     
     // Get page dimensions
     const { width, height } = firstPage.getSize();
