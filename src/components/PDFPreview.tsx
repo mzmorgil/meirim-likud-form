@@ -3,15 +3,18 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { downloadPdf } from "@/utils/pdfUtils";
+import { uploadFormFiles } from "@/utils/uploadUtils";
+import { useState } from "react";
 
 interface PDFPreviewProps {
   pdfUrl: string | null;
+  pdfBlob: Blob | null;
   formData: {
     idNumber: string;
     firstName: string;
     lastName: string;
     fatherName: string;
-    birthDate: string;
+    birthDate: Date;
     maritalStatus: string;
     birthCountry: string;
     immigrationYear?: string;
@@ -20,11 +23,15 @@ interface PDFPreviewProps {
     zipCode?: string;
     mobile: string;
     email: string;
+    signature: string;
   };
   onBack: () => void;
+  onUploadSuccess: () => void;
 }
 
-const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
+const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFPreviewProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+
   const handleDownload = () => {
     if (!pdfUrl) return;
     
@@ -38,8 +45,30 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
     toast.success("המסמך הורד בהצלחה");
   };
 
-  const handleUpload = () => {
-    toast.info("העלאה למערכת תהיה זמינה בקרוב");
+  const handleUpload = async () => {
+    if (!pdfBlob) {
+      toast.error("אירעה שגיאה בהכנת המסמך להעלאה");
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      // Format date for JSON
+      const formattedData = {
+        ...formData,
+        birthDate: formData.birthDate.toISOString(),
+      };
+      
+      await uploadFormFiles(pdfBlob, formattedData);
+      toast.success("ההתפקדות נשלחה בהצלחה!");
+      onUploadSuccess();
+    } catch (error) {
+      console.error("Failed to upload files:", error);
+      toast.error("אירעה שגיאה בעת שליחת הטופס. אנא נסה שנית");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -61,7 +90,7 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
             <li><span className="font-semibold">תעודת זהות:</span> {formData.idNumber}</li>
             <li><span className="font-semibold">שם מלא:</span> {formData.firstName} {formData.lastName}</li>
             <li><span className="font-semibold">שם האב:</span> {formData.fatherName}</li>
-            <li><span className="font-semibold">תאריך לידה:</span> {new Date(formData.birthDate).toLocaleDateString('he-IL')}</li>
+            <li><span className="font-semibold">תאריך לידה:</span> {formData.birthDate.toLocaleDateString('he-IL')}</li>
             <li><span className="font-semibold">מצב משפחתי:</span> {formData.maritalStatus}</li>
             <li><span className="font-semibold">ארץ לידה:</span> {formData.birthCountry}</li>
             {formData.immigrationYear && (
@@ -84,6 +113,13 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
         </div>
       </div>
 
+      <div className="p-4 rounded-lg bg-white shadow-sm mb-4">
+        <h2 className="font-medium mb-2">חתימה</h2>
+        <div className="flex justify-center">
+          <img src={formData.signature} alt="חתימה" className="max-h-[100px]" />
+        </div>
+      </div>
+
       <div className="border rounded-lg overflow-hidden my-4 bg-white w-full" style={{height: "280px"}}>
         {pdfUrl && (
           <iframe 
@@ -99,8 +135,17 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
         onClick={handleUpload}
         className="w-full mt-3 transition-all duration-300 ease-apple hover:bg-primary/90"
         size="lg"
+        disabled={isUploading}
       >
-        <Upload className="ml-2 h-5 w-5" /> העלאה למערכת
+        {isUploading ? (
+          <>
+            <Upload className="ml-2 h-5 w-5 animate-spin" /> מעלה...
+          </>
+        ) : (
+          <>
+            <Upload className="ml-2 h-5 w-5" /> התפקדות
+          </>
+        )}
       </Button>
       
       <div className="grid grid-cols-1 gap-2 mt-2">
@@ -110,6 +155,7 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
             onClick={onBack}
             className="transition-all duration-300 ease-apple hover:bg-secondary"
             size="sm"
+            disabled={isUploading}
           >
             <ArrowLeft className="ml-1 h-3 w-3" /> חזרה לטופס
           </Button>
@@ -119,6 +165,7 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
             onClick={handleDownload}
             className="transition-all duration-300 ease-apple"
             size="sm"
+            disabled={isUploading}
           >
             <Download className="ml-1 h-3 w-3" /> הורד PDF
           </Button>

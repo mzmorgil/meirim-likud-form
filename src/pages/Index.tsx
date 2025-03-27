@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { addTextToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
 import PDFPreview from '@/components/PDFPreview';
+import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black.pdf';
@@ -12,7 +13,7 @@ interface FormData {
   firstName: string;
   lastName: string;
   fatherName: string;
-  birthDate: string;
+  birthDate: Date;
   maritalStatus: string;
   birthCountry: string;
   immigrationYear?: string;
@@ -21,12 +22,14 @@ interface FormData {
   zipCode?: string;
   mobile: string;
   email: string;
+  signature: string;
 }
 
 const Index = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
-  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState<'form' | 'preview' | 'thankYou'>('form');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const handleFormSubmit = async (data: FormData) => {
@@ -35,12 +38,12 @@ const Index = () => {
     
     try {
       // Process the PDF to add the text
-      // Currently, we'll just add the name to the PDF, but this can be enhanced later
       const fullName = `${data.firstName} ${data.lastName}`;
       const modifiedPdfBlob = await addTextToPdf(PDF_URL, fullName);
+      setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
-      setShowPdfPreview(true);
+      setCurrentScreen('preview');
       toast.success('הטופס נוצר בהצלחה!');
     } catch (error) {
       console.error('Failed to process PDF:', error);
@@ -48,6 +51,14 @@ const Index = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleBack = () => {
+    setCurrentScreen('form');
+  };
+  
+  const handleUploadSuccess = () => {
+    setCurrentScreen('thankYou');
   };
 
   // Clean up object URL on unmount
@@ -68,21 +79,31 @@ const Index = () => {
             התפקדות לליכוד
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
-            {showPdfPreview 
-              ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData?.firstName} ${formData?.lastName}` 
-              : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
+            {currentScreen === 'thankYou' && formData 
+              ? `תודה על ההתפקדות, ${formData.firstName}!`
+              : currentScreen === 'preview' && formData
+                ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData.firstName} ${formData.lastName}` 
+                : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
           </p>
         </header>
         
         <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
-          {showPdfPreview && formData ? (
+          {currentScreen === 'form' && (
+            <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
+          )}
+          
+          {currentScreen === 'preview' && formData && (
             <PDFPreview 
               pdfUrl={pdfUrl}
+              pdfBlob={pdfBlob}
               formData={formData}
-              onBack={() => setShowPdfPreview(false)}
+              onBack={handleBack}
+              onUploadSuccess={handleUploadSuccess}
             />
-          ) : (
-            <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
+          )}
+          
+          {currentScreen === 'thankYou' && formData && (
+            <ThankYou name={formData.firstName} />
           )}
         </div>
         

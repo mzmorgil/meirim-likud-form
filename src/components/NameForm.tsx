@@ -1,16 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RefreshCw, Calendar, User, Mail, Phone, UserRound, Home, Hash, Signature } from 'lucide-react';
+import { RefreshCw, Calendar as CalendarIcon, User, Mail, Phone, UserRound, Home, Hash, Signature } from 'lucide-react';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import SignatureCanvas from 'react-signature-canvas';
+import { cn } from '@/lib/utils';
 
 // Validator for Israeli ID numbers
 const isValidIsraeliID = (id: string) => {
@@ -46,7 +51,9 @@ const formSchema = z.object({
   firstName: z.string().min(2, { message: "שם פרטי חייב להכיל לפחות 2 תווים" }),
   lastName: z.string().min(2, { message: "שם משפחה חייב להכיל לפחות 2 תווים" }),
   fatherName: z.string().min(2, { message: "שם האב חייב להכיל לפחות 2 תווים" }),
-  birthDate: z.string().refine(val => !isNaN(Date.parse(val)), { message: "תאריך לידה אינו תקין" }),
+  birthDate: z.date({
+    required_error: "יש לבחור תאריך לידה",
+  }),
   maritalStatus: z.string({ required_error: "יש לבחור מצב משפחתי" }),
   birthCountry: z.string().min(2, { message: "ארץ לידה חייבת להכיל לפחות 2 תווים" }),
   immigrationYear: z.string().optional()
@@ -59,6 +66,7 @@ const formSchema = z.object({
   zipCode: z.string().optional(),
   mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),
   email: z.string().email({ message: "כתובת דואר אלקטרוני אינה תקינה" }),
+  signature: z.string().min(1, { message: "חתימה נדרשת" }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -69,7 +77,8 @@ interface NameFormProps {
 }
 
 const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
-  const [signature, setSignature] = useState<string>('');
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const signatureRef = useRef<SignatureCanvas>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,7 +87,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       firstName: '',
       lastName: '',
       fatherName: '',
-      birthDate: '',
+      birthDate: undefined,
       maritalStatus: '',
       birthCountry: 'ישראל',
       immigrationYear: '',
@@ -87,38 +96,60 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       zipCode: '',
       mobile: '',
       email: '',
+      signature: '',
     },
   });
 
-  // Update signature when first or last name changes
+  // Generate automatic signature when name changes
   React.useEffect(() => {
     const firstName = form.watch('firstName');
     const lastName = form.watch('lastName');
     
-    if (firstName && lastName) {
-      // Create basic signature based on name
-      const canvas = document.createElement('canvas');
-      canvas.width = 300;
-      canvas.height = 100;
-      const ctx = canvas.getContext('2d');
-      
-      if (ctx) {
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.font = 'italic bold 32px Arial';
-        ctx.fillStyle = 'black';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        // Combine first and last name for signature
-        const fullName = `${firstName} ${lastName}`;
-        ctx.fillText(fullName, canvas.width / 2, canvas.height / 2);
-        
-        setSignature(canvas.toDataURL('image/png'));
-      }
+    if (firstName && lastName && !form.getValues('signature')) {
+      generateAutoSignature(firstName, lastName);
     }
   }, [form.watch('firstName'), form.watch('lastName')]);
+
+  const generateAutoSignature = (firstName: string, lastName: string) => {
+    if (!firstName || !lastName) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Use a cursive-like font for the signature
+      ctx.font = 'italic 32px "Segoe Script", "Brush Script MT", cursive';
+      ctx.fillStyle = 'black';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Combine first and last name for signature
+      const fullName = `${firstName} ${lastName}`;
+      ctx.fillText(fullName, canvas.width / 2, canvas.height / 2);
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      form.setValue('signature', dataUrl);
+    }
+  };
+
+  const clearSignature = () => {
+    if (signatureRef.current) {
+      signatureRef.current.clear();
+    }
+  };
+
+  const saveSignature = () => {
+    if (signatureRef.current) {
+      const dataUrl = signatureRef.current.toDataURL('image/png');
+      form.setValue('signature', dataUrl, { shouldValidate: true });
+      setShowSignaturePad(false);
+    }
+  };
 
   const handleSubmit = (values: FormValues) => {
     onSubmit(values);
@@ -231,24 +262,50 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* תאריך לידה */}
+              {/* תאריך לידה - Hebrew calendar */}
               <FormField
                 control={form.control}
                 name="birthDate"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
+                      <CalendarIcon className="h-4 w-4" />
                       תאריך לידה
                     </FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
-                        className="transition-all focus:ring-2"
-                        disabled={isLoading}
-                      />
-                    </FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-right font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                            disabled={isLoading}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy", { locale: he })
+                            ) : (
+                              <span>בחר תאריך</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                          locale={he}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -449,21 +506,91 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
             </div>
 
             {/* חתימה */}
-            <div className="col-span-full">
-              <FormLabel className="flex items-center gap-2 mb-2">
-                <Signature className="h-4 w-4" />
-                חתימה
-              </FormLabel>
-              {signature ? (
-                <div className="border p-4 rounded-md bg-white flex justify-center">
-                  <img src={signature} alt="חתימה" style={{ maxHeight: '100px' }} />
-                </div>
-              ) : (
-                <div className="border p-4 rounded-md bg-white text-center text-muted-foreground">
-                  החתימה תיווצר אוטומטית לאחר מילוי השם
-                </div>
+            <FormField
+              control={form.control}
+              name="signature"
+              render={({ field }) => (
+                <FormItem className="col-span-full">
+                  <FormLabel className="flex items-center gap-2 mb-2">
+                    <Signature className="h-4 w-4" />
+                    חתימה
+                  </FormLabel>
+                  <FormControl>
+                    <div className="border rounded-md bg-white p-4 flex flex-col items-center">
+                      {field.value ? (
+                        <div className="flex flex-col items-center w-full">
+                          <img 
+                            src={field.value} 
+                            alt="חתימה" 
+                            className="max-h-[100px] mb-3"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowSignaturePad(true)}
+                            disabled={isLoading}
+                          >
+                            שנה חתימה
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={() => setShowSignaturePad(true)}
+                          disabled={isLoading}
+                        >
+                          הוסף חתימה אישית
+                        </Button>
+                      )}
+                      <input 
+                        type="hidden" 
+                        {...field} 
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
+            />
+
+            {/* Signature Dialog */}
+            <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>הוסף חתימה</DialogTitle>
+                  <DialogDescription>
+                    חתום באמצעות העכבר או באצבע במכשיר מגע
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="border rounded-md bg-white p-1 h-[200px]">
+                  <SignatureCanvas
+                    ref={signatureRef}
+                    canvasProps={{
+                      width: 500,
+                      height: 198,
+                      className: 'w-full h-full signature-canvas'
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <Button
+                    type="button" 
+                    variant="outline"
+                    onClick={clearSignature}
+                  >
+                    נקה
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={saveSignature}
+                  >
+                    שמור חתימה
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
           </CardContent>
           <CardFooter className="flex justify-center pb-6">
             <Button 
