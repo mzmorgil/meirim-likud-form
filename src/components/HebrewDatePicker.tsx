@@ -8,6 +8,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { heIL } from '@mui/material/locale';
 import dayjs from 'dayjs';
 import 'dayjs/locale/he'; // Import Hebrew locale
+import { toJewishDate, toHebrewJewishDate } from 'jewish-date';
 
 // Create theme with Hebrew locale
 const theme = createTheme(
@@ -55,18 +56,17 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
     onChange(newValue ? newValue.toDate() : null);
   };
 
-  // Get Hebrew date representation
+  // Get Hebrew date representation using jewish-date package
   const getHebrewDateText = (date: Date | null) => {
     if (!date) return '';
     
     try {
-      // Format using Intl.DateTimeFormat with Hebrew calendar
-      return new Intl.DateTimeFormat('he-IL', {
-        calendar: 'hebrew',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).format(date);
+      // Convert to Jewish date using the jewish-date package
+      const jewishDate = toJewishDate(date);
+      const hebrewDate = toHebrewJewishDate(jewishDate);
+      
+      // Format: day, month and year in Hebrew
+      return `${hebrewDate.day} ${hebrewDate.monthName} ${hebrewDate.year}`;
     } catch (e) {
       console.error('Error converting to Hebrew date:', e);
       return '';
