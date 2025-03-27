@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RefreshCw, Calendar as CalendarIcon, User, Mail, Phone, UserRound, Home, Hash, Signature } from 'lucide-react';
-import { format } from 'date-fns';
+import { RefreshCw, Calendar as CalendarIcon, User, Mail, Phone, UserRound, Home, Hash, Signature, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, parse } from 'date-fns';
 import { he } from 'date-fns/locale';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,26 @@ const maritalStatusOptions = [
 // Current year for validation
 const currentYear = new Date().getFullYear();
 
+// Function to convert Gregorian date to Hebrew date
+const getHebrewDate = (date: Date | null): string => {
+  if (!date) return '';
+  
+  try {
+    // This is a simplified implementation
+    // In a production environment, you would use a library like hebcal or similar
+    const formatter = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    
+    return formatter.format(date);
+  } catch (error) {
+    console.error('Error converting to Hebrew date:', error);
+    return '';
+  }
+};
+
 const formSchema = z.object({
   idNumber: z.string()
     .min(5, { message: "מספר תעודת זהות חייב להכיל לפחות 5 ספרות" })
@@ -54,6 +74,7 @@ const formSchema = z.object({
   birthDate: z.date({
     required_error: "יש לבחור תאריך לידה",
   }),
+  birthDateManual: z.string().optional(),
   maritalStatus: z.string({ required_error: "יש לבחור מצב משפחתי" }),
   birthCountry: z.string().min(2, { message: "ארץ לידה חייבת להכיל לפחות 2 תווים" }),
   immigrationYear: z.string().optional()
@@ -78,6 +99,8 @@ interface NameFormProps {
 
 const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
   const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [hebrewDate, setHebrewDate] = useState<string>('');
+  const [yearSelectMode, setYearSelectMode] = useState(false);
   const signatureRef = useRef<SignatureCanvas>(null);
   
   const form = useForm<FormValues>({
@@ -88,6 +111,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       lastName: '',
       fatherName: '',
       birthDate: undefined,
+      birthDateManual: '',
       maritalStatus: '',
       birthCountry: 'ישראל',
       immigrationYear: '',
@@ -110,6 +134,38 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     }
   }, [form.watch('firstName'), form.watch('lastName')]);
 
+  // Update the Hebrew date when the Gregorian date changes
+  React.useEffect(() => {
+    const date = form.watch('birthDate');
+    if (date) {
+      const hebrewDateString = getHebrewDate(date);
+      setHebrewDate(hebrewDateString);
+    } else {
+      setHebrewDate('');
+    }
+  }, [form.watch('birthDate')]);
+
+  // Handle manual date input
+  const handleManualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dateString = e.target.value;
+    form.setValue('birthDateManual', dateString);
+    
+    if (dateString) {
+      try {
+        // Try to parse the input date
+        const parsedDate = parse(dateString, 'dd/MM/yyyy', new Date());
+        
+        // If valid date, set the birthDate field
+        if (!isNaN(parsedDate.getTime())) {
+          form.setValue('birthDate', parsedDate, { shouldValidate: true });
+        }
+      } catch (error) {
+        // If parsing fails, don't update the birthDate field
+        console.error('Error parsing date:', error);
+      }
+    }
+  };
+
   const generateAutoSignature = (firstName: string, lastName: string) => {
     if (!firstName || !lastName) return;
     
@@ -122,15 +178,22 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Use a cursive-like font for the signature
+      // Use a more signature-like font
       ctx.font = 'italic 32px "Segoe Script", "Brush Script MT", cursive';
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
+      // Add some randomness to the signature to make it more authentic
+      const angle = -Math.random() * 0.2 - 0.1; // Small random tilt
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(angle);
+      
       // Combine first and last name for signature
       const fullName = `${firstName} ${lastName}`;
-      ctx.fillText(fullName, canvas.width / 2, canvas.height / 2);
+      ctx.fillText(fullName, 0, 0);
+      ctx.restore();
       
       const dataUrl = canvas.toDataURL('image/png');
       form.setValue('signature', dataUrl);
@@ -151,8 +214,61 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     }
   };
 
+  // Years for the quick year selector
+  const generateYearOptions = () => {
+    const years = [];
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 70; // Allow selection from up to 70 years ago
+    
+    for (let year = currentYear; year >= startYear; year--) {
+      years.push(year);
+    }
+    
+    return years;
+  };
+
   const handleSubmit = (values: FormValues) => {
     onSubmit(values);
+  };
+
+  // Custom year navigation component for the calendar
+  const YearNavigation = () => {
+    const years = generateYearOptions();
+    
+    return (
+      <div className="w-full p-2 bg-muted/20 rounded-md">
+        <div className="flex justify-between items-center mb-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setYearSelectMode(false)}
+            className="text-xs"
+          >
+            חזרה לתצוגת הלוח
+          </Button>
+          <span className="text-sm font-medium">בחר שנה</span>
+        </div>
+        <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
+          {years.map(year => (
+            <Button
+              key={year}
+              variant="outline"
+              size="sm"
+              className="py-1 px-2 h-auto text-xs"
+              onClick={() => {
+                const currentDate = form.getValues('birthDate') || new Date();
+                const newDate = new Date(currentDate);
+                newDate.setFullYear(year);
+                form.setValue('birthDate', newDate, { shouldValidate: true });
+                setYearSelectMode(false);
+              }}
+            >
+              {year}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -262,7 +378,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 )}
               />
 
-              {/* תאריך לידה - Hebrew calendar */}
+              {/* תאריך לידה - Enhanced with manual input and Hebrew date */}
               <FormField
                 control={form.control}
                 name="birthDate"
@@ -272,40 +388,77 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       <CalendarIcon className="h-4 w-4" />
                       תאריך לידה
                     </FormLabel>
+                    
+                    {/* Manual date input */}
+                    <FormControl>
+                      <Input 
+                        placeholder="הזן תאריך (DD/MM/YYYY)" 
+                        value={field.value ? format(field.value, "dd/MM/yyyy") : form.getValues('birthDateManual')}
+                        onChange={handleManualDateChange}
+                        className="transition-all focus:ring-2 text-right mb-1"
+                        disabled={isLoading}
+                        dir="rtl"
+                      />
+                    </FormControl>
+                    
+                    {/* Calendar popover */}
                     <Popover>
                       <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy", { locale: he })
-                            ) : (
-                              <span>בחר תאריך</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-between"
+                          disabled={isLoading}
+                        >
+                          <span>בחר מהלוח</span>
+                          <CalendarIcon className="h-4 w-4" />
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          locale={he}
-                          className={cn("p-3 pointer-events-auto")}
-                        />
+                        {yearSelectMode ? (
+                          <YearNavigation />
+                        ) : (
+                          <div className="p-2">
+                            <div className="flex justify-between items-center mb-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setYearSelectMode(true)}
+                                className="text-xs flex items-center gap-1"
+                              >
+                                <span>בחר שנה</span>
+                                <ChevronLeft className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                if (date) {
+                                  form.setValue('birthDateManual', format(date, "dd/MM/yyyy"));
+                                }
+                              }}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                              locale={he}
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </div>
+                        )}
                       </PopoverContent>
                     </Popover>
+                    
+                    {/* Display Hebrew date if available */}
+                    {hebrewDate && (
+                      <div className="text-xs text-muted-foreground mt-1 mr-1">
+                        תאריך עברי: {hebrewDate}
+                      </div>
+                    )}
+                    
                     <FormMessage />
                   </FormItem>
                 )}
