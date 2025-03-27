@@ -1,5 +1,5 @@
-
 import { v4 as uuidv4 } from 'uuid';
+import { ensureJsrsasignLoaded } from './loadJsrsasign';
 
 // Service account information
 const serviceAccount = {
@@ -52,7 +52,9 @@ export const generateUploadContext = (idNumber: string): string => {
 };
 
 // Generate JWT using the service account private key
-const generateJWT = () => {
+const generateJWT = async () => {
+  await ensureJsrsasignLoaded();
+  
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     iss: serviceAccount.client_email,
@@ -63,14 +65,13 @@ const generateJWT = () => {
   };
   const header = { alg: "RS256", typ: "JWT" };
   
-  // Use KJUR directly from window since it's loaded globally by jsrsasign
   return window.KJUR.jws.JWS.sign("RS256", JSON.stringify(header), JSON.stringify(payload), serviceAccount.private_key);
 };
 
 // Obtain an access token from Google
 const getAccessToken = async (): Promise<string> => {
   try {
-    const jwt = generateJWT();
+    const jwt = await generateJWT();
     const response = await fetch(serviceAccount.token_uri, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
