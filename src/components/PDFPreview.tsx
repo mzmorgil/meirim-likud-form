@@ -40,10 +40,10 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
         <h1 className="text-lg font-medium">המסמך שלך מוכן</h1>
       </div>
 
-      <div className="border rounded-lg overflow-hidden my-2 aspect-[1/1.2] bg-white max-h-[280px]">
+      <div className="border rounded-lg overflow-hidden my-2 bg-white max-h-[280px] w-full">
         {pdfUrl && (
           <iframe 
-            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH,top`} 
             className="w-full h-full" 
             title="PDF Preview"
           />
@@ -59,24 +59,26 @@ const PDFPreview = ({ pdfUrl, formData, onBack }: PDFPreviewProps) => {
         <Upload className="ml-2 h-5 w-5" /> העלאה לענן
       </Button>
       
-      <div className="grid grid-cols-2 gap-2 mt-2">
-        <Button 
-          variant="outline"
-          onClick={onBack}
-          className="transition-all duration-300 ease-apple hover:bg-secondary"
-          size="sm"
-        >
-          <ArrowLeft className="ml-1 h-3 w-3" /> חזרה
-        </Button>
-        
-        <Button 
-          variant="outline"
-          onClick={handleDownload}
-          className="transition-all duration-300 ease-apple"
-          size="sm"
-        >
-          <Download className="ml-1 h-3 w-3" /> הורדה
-        </Button>
+      <div className="grid grid-cols-1 gap-2 mt-2">
+        <div className="flex justify-between">
+          <Button 
+            variant="outline"
+            onClick={onBack}
+            className="transition-all duration-300 ease-apple hover:bg-secondary"
+            size="sm"
+          >
+            <ArrowLeft className="ml-1 h-3 w-3" /> חזרה
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleDownload}
+            className="transition-all duration-300 ease-apple"
+            size="sm"
+          >
+            <Download className="ml-1 h-3 w-3" /> הורדה
+          </Button>
+        </div>
       </div>
     </div>
   );
