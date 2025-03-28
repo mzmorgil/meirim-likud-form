@@ -1,0 +1,25 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[dev]
+  command = "npm run dev"
+  port = 8888
+  targetPort = 8080
+  publish = "dist"
+  autoLaunch = true
+  framework = "#custom"
+
+# Redirect API calls to Netlify Functions
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# Redirect all other paths to index.html for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
