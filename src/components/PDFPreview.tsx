@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { downloadPdf } from "@/utils/pdfUtils";
 import { uploadFormFiles } from "@/utils/uploadUtils";
 import { useState } from "react";
-import PDFViewer from "@/components/PDFViewer";
 
 interface PDFPreviewProps {
   pdfUrl: string | null;
