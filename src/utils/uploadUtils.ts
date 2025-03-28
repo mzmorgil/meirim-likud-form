@@ -36,19 +36,37 @@ export const generateUploadContext = (idNumber: string): string => {
   return `${idNumber}-${timestamp}-${uuid}`;
 };
 
-// Get a pre-signed URL for uploading a file to Google Cloud Storage
-const getSignedUploadUrl = async (
+// Convert Blob to base64
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+// Upload a file to Google Cloud Storage via Netlify function
+const uploadFileToGCS = async (
+  file: Blob,
   fileName: string,
   contentType: string,
   idNumber: string
-): Promise<{ signedUrl: string; uploadContext: string; fileUrl: string }> => {
+): Promise<{ fileUrl: string; uploadContext: string }> => {
   try {
-    const response = await fetch('/.netlify/functions/generate-upload-url', {
+    console.log(`Preparing to upload file: ${fileName}`);
+    
+    // Convert file to base64
+    const base64Data = await blobToBase64(file);
+    
+    // Send to Netlify function
+    const response = await fetch('/.netlify/functions/upload-file', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        fileData: base64Data,
         fileName,
         contentType,
         idNumber,
@@ -57,12 +75,19 @@ const getSignedUploadUrl = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to get signed URL: ${response.status} ${errorText}`);
+      console.error(`Upload response: ${response.status} ${errorText}`);
+      throw new Error(`Upload failed: ${response.status} ${errorText}`);
     }
-
-    return await response.json();
+    
+    const data = await response.json();
+    console.log("Upload successful:", data);
+    
+    return {
+      fileUrl: data.fileUrl,
+      uploadContext: data.uploadContext
+    };
   } catch (error) {
-    console.error('Error getting signed URL:', error);
+    console.error("Upload error:", error);
     throw error;
   }
 };
@@ -98,36 +123,6 @@ const uploadMetadata = async (
   }
 };
 
-// Upload a file to Google Cloud Storage using a pre-signed URL
-const uploadFileWithSignedUrl = async (
-  file: Blob,
-  signedUrl: string,
-  contentType: string
-): Promise<void> => {
-  try {
-    console.log(`Uploading file using signed URL`);
-    
-    const response = await fetch(signedUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': contentType,
-      },
-      body: file,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Upload response: ${response.status} ${errorText}`);
-      throw new Error(`Upload failed: ${response.status} ${errorText}`);
-    }
-    
-    console.log("Upload successful");
-  } catch (error) {
-    console.error("Upload error:", error);
-    throw error;
-  }
-};
-
 // Upload both PDF and JSON files
 export const uploadFormFiles = async (
   pdfBlob: Blob, 
@@ -150,17 +145,14 @@ export const uploadFormFiles = async (
       }
     };
     
-    // Get signed URL for PDF upload
-    console.log("Getting signed URL for PDF upload...");
-    const { signedUrl: pdfSignedUrl, uploadContext, fileUrl: pdfUrl } = await getSignedUploadUrl(
+    // Upload PDF file
+    console.log("Uploading PDF...");
+    const { fileUrl: pdfUrl, uploadContext } = await uploadFileToGCS(
+      pdfBlob,
       `${formData.idNumber}.pdf`,
       'application/pdf',
       formData.idNumber
     );
-    
-    // Upload PDF using signed URL
-    console.log("Uploading PDF...");
-    await uploadFileWithSignedUrl(pdfBlob, pdfSignedUrl, 'application/pdf');
     
     // Upload JSON metadata
     console.log("Uploading JSON metadata...");
