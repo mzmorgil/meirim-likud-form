@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
 import PDFPreview from '@/components/PDFPreview';
-import PDFViewer from '@/components/PDFViewer';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 
