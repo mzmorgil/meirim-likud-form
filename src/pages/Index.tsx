@@ -45,7 +45,7 @@ interface PDFFormData {
 }
 
 // Type for the preview component props to ensure compatibility
-interface PreviewFormData extends PDFFormData {
+interface PreviewFormData extends Omit<PDFFormData, 'spouse'> {
   spouse?: PersonFormValues;
   payment?: PaymentData;
 }
@@ -128,8 +128,24 @@ const Index = () => {
   const getPreviewData = (): PreviewFormData | null => {
     if (!formData) return null;
     
+    // Make sure we're returning a complete PreviewFormData object with all required fields
     return {
-      ...formData,
+      idNumber: formData.idNumber,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      fatherName: formData.fatherName,
+      birthDate: formData.birthDate,
+      gender: formData.gender,
+      maritalStatus: formData.maritalStatus,
+      birthCountry: formData.birthCountry,
+      immigrationYear: formData.immigrationYear,
+      address: formData.address,
+      city: formData.city,
+      zipCode: formData.zipCode,
+      mobile: formData.mobile,
+      email: formData.email,
+      signature: formData.signature,
+      includeSpouse: formData.includeSpouse,
       spouse: spouseData || undefined,
       payment: paymentData || undefined
     };

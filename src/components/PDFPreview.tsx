@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ interface PDFPreviewProps {
     email: string;
     signature: string;
     includeSpouse?: boolean;
-    spouse?: PersonFormValues;
+    spouse?: PersonFormValues; // Using the non-partial type for the preview
     payment?: {
       cardNumber: string;
       cardholderName: string;
