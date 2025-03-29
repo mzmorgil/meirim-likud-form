@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, RefreshCw, User, UserRound, Hash, Signature, Calendar as CalendarIcon, Flag } from 'lucide-react';
+import { ArrowRight, RefreshCw, User, UserRound, Hash, Signature, Calendar as CalendarIcon, Flag, Mail, Phone, Home } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { countries } from '@/utils/countryData';
 
@@ -54,6 +54,11 @@ const formSchema = z.object({
       message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
       path: ["immigrationYear"]
     }),
+  address: z.string().min(5, { message: "כתובת חייבת להכיל לפחות 5 תווים" }),
+  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
+  zipCode: z.string().optional(),
+  mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),
+  email: z.string().email({ message: "כתובת דואר אלקטרוני אינה תקינה" }),
   signature: z.string().min(1, { message: "חתימה נדרשת" }),
 });
 
@@ -81,6 +86,11 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
       gender: '',
       birthCountry: 'ישראל',
       immigrationYear: '',
+      address: '',
+      city: '',
+      zipCode: '',
+      mobile: '',
+      email: '',
       signature: '',
     },
   });
@@ -283,7 +293,7 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="flex flex-row space-x-4 space-x-reverse"
+                        className="flex flex-row space-x-4 space-x-reverse text-right"
                         disabled={isLoading}
                       >
                         {genderOptions.map(option => (
@@ -360,6 +370,121 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
                   )}
                 />
               )}
+              
+              {/* Start of the added contact details section */}
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem className="col-span-full">
+                    <FormLabel className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      כתובת
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס כתובת מלאה" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>יישוב</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס יישוב" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="zipCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>מיקוד (אופציונלי)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס מיקוד" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                        type="text"
+                        inputMode="numeric"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mobile"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      טלפון נייד
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס מספר טלפון נייד" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                        type="tel"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      דואר אלקטרוני
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס כתובת דואר אלקטרוני" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                        type="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {/* End of the added contact details section */}
             </div>
 
             <FormField
