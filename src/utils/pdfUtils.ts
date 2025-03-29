@@ -1,6 +1,9 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 
+// Debug mode can be enabled via environment variable or directly in code
+const DEBUG_PDF_GRID = import.meta.env.VITE_DEBUG_PDF_GRID === 'true' || false;
+
 // Define form field positions and their properties
 type FormPosition = {
   x: number;
@@ -28,9 +31,9 @@ type FormFields = {
 
 // Form field positions for an A4-sized PDF (595 x 842 points)
 const FORM_FIELDS: FormFields = {
-  idNumber: { x: 390, y: 675, fontSize: 12 },
-  firstName: { x: 390, y: 650, fontSize: 12 },
-  lastName: { x: 200, y: 650, fontSize: 12 },
+  idNumber: { x: 495, y: 685, fontSize: 12 },
+  firstName: { x: 175, y: 685, fontSize: 12 },
+  lastName: { x: 325, y: 685, fontSize: 12 },
   fatherName: { x: 390, y: 625, fontSize: 12 },
   birthDate: { x: 390, y: 600, fontSize: 12 },
   maritalStatus: { x: 390, y: 575, fontSize: 12 },
@@ -48,9 +51,62 @@ const FORM_FIELDS: FormFields = {
 const FONT_URL = '/fonts/LiberationMono-Regular.ttf';
 
 /**
+ * Adds a visual debug grid to the PDF to help with positioning elements
+ * @param page The PDF page to add the grid to
+ * @param pageWidth Width of the page in points
+ * @param pageHeight Height of the page in points
+ * @param gridSpacing Spacing between grid lines in points
+ */
+const addDebugGrid = (
+  page: any,
+  pageWidth: number = 595, // A4 width in points
+  pageHeight: number = 842, // A4 height in points
+  gridSpacing: number = 10
+): void => {
+  // Draw vertical lines
+  for (let x = 0; x <= pageWidth; x += gridSpacing) {
+    page.drawLine({
+      start: { x, y: 0 },
+      end: { x, y: pageHeight },
+      thickness: 0.5,
+      color: rgb(0.8, 0.8, 0.8), // Light gray
+    });
+    
+    // Add x-coordinate labels with offset for odd lines
+    const isOdd = Math.floor(x / gridSpacing) % 2 === 1;
+    page.drawText(`${x}`, {
+      x: x + 2,
+      y: isOdd ? 30 : 5, // Offset odd lines by 25px
+      size: 8,
+      color: rgb(0.5, 0.5, 0.8), // Blue-gray
+    });
+  }
+
+  // Draw horizontal lines
+  for (let y = 0; y <= pageHeight; y += gridSpacing) {
+    page.drawLine({
+      start: { x: 0, y },
+      end: { x: pageWidth, y },
+      thickness: 0.5,
+      color: rgb(0.8, 0.8, 0.8), // Light gray
+    });
+    
+    // Add y-coordinate labels with offset for odd lines
+    const isOdd = Math.floor(y / gridSpacing) % 2 === 1;
+    page.drawText(`${y}`, {
+      x: isOdd ? 30 : 5, // Offset odd lines by 25px
+      y: y + 2,
+      size: 8,
+      color: rgb(0.5, 0.5, 0.8), // Blue-gray
+    });
+  }
+};
+
+/**
  * Adds form data to a PDF document using an embedded font for vector text
  * @param pdfUrl URL of the base PDF to modify
  * @param formData User's form data to add
+ * @param debug Optional override for debug grid (overrides environment variable)
  * @returns Blob of the modified PDF
  */
 export const addFormDataToPdf = async (
@@ -70,7 +126,8 @@ export const addFormDataToPdf = async (
     mobile: string;
     email: string;
     signature: string;
-  }
+  },
+  debug?: boolean
 ): Promise<Blob> => {
   try {
     // Fetch the base PDF
@@ -91,6 +148,13 @@ export const addFormDataToPdf = async (
     // Get the first page
     const page = pdfDoc.getPages()[0];
     if (!page) throw new Error('PDF has no pages');
+
+    // Add debug grid if enabled (either via env var or parameter)
+    const showDebugGrid = debug !== undefined ? debug : DEBUG_PDF_GRID;
+    if (showDebugGrid) {
+      const { width, height } = page.getSize();
+      addDebugGrid(page, width, height);
+    }
 
     // Format birthdate for Hebrew locale
     const formattedBirthDate = formData.birthDate instanceof Date
