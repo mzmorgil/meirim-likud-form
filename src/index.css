@@ -94,6 +94,16 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    direction: rtl;
+  }
+  
+  /* RTL specific overrides */
+  .rtl-flip {
+    transform: scaleX(-1);
+  }
+  
+  .rtl-text {
+    text-align: right;
   }
 }
 
@@ -111,6 +121,17 @@
   }
 }
 
+/* Fix RTL for form elements */
+input, textarea, select {
+  text-align: right;
+}
+
+/* Fix for RTL UI components where needed */
+.rtl-override {
+  direction: ltr;
+}
+
+/* Keep rest of the existing CSS */
 .smooth-scroll {
   scroll-behavior: smooth;
 }
