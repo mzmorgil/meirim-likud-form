@@ -1,18 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import HebrewDatePicker from '@/components/HebrewDatePicker';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form } from '@/components/ui/form';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, RefreshCw, User, UserRound, Hash, Signature, Calendar as CalendarIcon, Flag, Mail, Phone, Home } from 'lucide-react';
-import SignatureCanvas from 'react-signature-canvas';
-import { countries } from '@/utils/countryData';
+import { ArrowRight, RefreshCw } from 'lucide-react';
+import PersonalInfoForm, { currentYear } from './PersonalInfoForm';
 
 const isValidIsraeliID = (id: string) => {
   const cleanId = String(id).trim();
@@ -27,13 +22,6 @@ const isValidIsraeliID = (id: string) => {
       return counter + (step > 9 ? step - 9 : step);
     }, 0) % 10 === 0;
 };
-
-const genderOptions = [
-  { value: 'ז', label: 'זכר' },
-  { value: 'נ', label: 'נקבה' },
-];
-
-const currentYear = new Date().getFullYear();
 
 const formSchema = z.object({
   idNumber: z.string()
@@ -70,8 +58,6 @@ interface SpouseFormProps {
 }
 
 const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = false }) => {
-  const [showSignaturePad, setShowSignaturePad] = useState(false);
-  const signatureRef = useRef<SignatureCanvas>(null);
   const [showImmigrationYear, setShowImmigrationYear] = useState(false);
   
   const form = useForm<FormValues>({
@@ -94,14 +80,9 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
     },
   });
 
-  useEffect(() => {
-    const birthCountry = form.watch('birthCountry');
-    setShowImmigrationYear(birthCountry !== 'ישראל');
-    
-    if (birthCountry === 'ישראל' && form.getValues('immigrationYear')) {
-      form.setValue('immigrationYear', '');
-    }
-  }, [form.watch('birthCountry')]);
+  const watchFirstName = form.watch('firstName');
+  const watchLastName = form.watch('lastName');
+  const watchBirthCountry = form.watch('birthCountry');
 
   const generateAutoSignature = (firstName: string, lastName: string) => {
     if (!firstName || !lastName) return;
@@ -128,19 +109,11 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
     }
   };
 
-  const clearSignature = () => {
-    if (signatureRef.current) {
-      signatureRef.current.clear();
+  useEffect(() => {
+    if (watchFirstName && watchLastName && !form.getValues('signature')) {
+      generateAutoSignature(watchFirstName, watchLastName);
     }
-  };
-
-  const saveSignature = () => {
-    if (signatureRef.current) {
-      const dataUrl = signatureRef.current.toDataURL('image/png');
-      form.setValue('signature', dataUrl, { shouldValidate: true });
-      setShowSignaturePad(false);
-    }
-  };
+  }, [watchFirstName, watchLastName]);
 
   const handleSubmit = (values: FormValues) => {
     onSubmit(values);
@@ -154,411 +127,14 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="idNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Hash className="h-4 w-4" />
-                      תעודת זהות
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס תעודת זהות" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                        type="text"
-                        inputMode="numeric"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      שם פרטי
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס שם פרטי" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      שם משפחה
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס שם משפחה" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="fatherName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <UserRound className="h-4 w-4" />
-                      שם האב
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס שם האב" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="birthDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      תאריך לידה
-                    </FormLabel>
-                    <FormControl>
-                      <HebrewDatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={isLoading}
-                        error={!!form.formState.errors.birthDate}
-                        helperText={form.formState.errors.birthDate?.message?.toString()}
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel className="flex items-center gap-2">מין</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-row space-x-4 space-x-reverse text-right"
-                        disabled={isLoading}
-                      >
-                        {genderOptions.map(option => (
-                          <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value={option.value} id={`spouse-gender-${option.value}`} />
-                            <FormLabel
-                              htmlFor={`spouse-gender-${option.value}`}
-                              className="font-normal cursor-pointer"
-                            >
-                              {option.label}
-                            </FormLabel>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="birthCountry"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Flag className="h-4 w-4" />
-                      ארץ לידה
-                    </FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר ארץ לידה" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="max-h-[16rem]">
-                        {countries.map((country) => (
-                          <SelectItem key={country.code} value={country.name}>
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {showImmigrationYear && (
-                <FormField
-                  control={form.control}
-                  name="immigrationYear"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">שנת עלייה</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="הכנס שנת עלייה" 
-                          {...field} 
-                          type="number"
-                          min="1948"
-                          max={currentYear.toString()}
-                          className="transition-all focus:ring-2 text-right"
-                          disabled={isLoading}
-                          dir="rtl"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-              
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem className="col-span-full">
-                    <FormLabel className="flex items-center gap-2">
-                      <Home className="h-4 w-4" />
-                      כתובת
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס כתובת מלאה" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>יישוב</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס יישוב" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="zipCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>מיקוד (אופציונלי)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס מיקוד" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                        type="text"
-                        inputMode="numeric"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="mobile"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      טלפון נייד
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס מספר טלפון נייד" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                        type="tel"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      דואר אלקטרוני
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס כתובת דואר אלקטרוני" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                        type="email"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
+            <PersonalInfoForm
               control={form.control}
-              name="signature"
-              render={({ field }) => (
-                <FormItem className="col-span-full">
-                  <FormLabel className="flex items-center gap-2 mb-2">
-                    <Signature className="h-4 w-4" />
-                    חתימה
-                  </FormLabel>
-                  <FormControl>
-                    <div className="border rounded-md bg-white p-4 flex flex-col items-center">
-                      {field.value ? (
-                        <div className="flex flex-col items-center w-full">
-                          <img 
-                            src={field.value} 
-                            alt="חתימה" 
-                            className="max-h-[100px] mb-3"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowSignaturePad(true)}
-                            disabled={isLoading}
-                          >
-                            שנה חתימה
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          onClick={() => setShowSignaturePad(true)}
-                          disabled={isLoading}
-                        >
-                          הוסף חתימה אישית
-                        </Button>
-                      )}
-                      <input 
-                        type="hidden" 
-                        {...field} 
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              isLoading={isLoading}
+              formPrefix="spouse"
+              generateAutoSignature={generateAutoSignature}
+              watchBirthCountry={watchBirthCountry}
+              setShowImmigrationYear={setShowImmigrationYear}
             />
-
-            <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>הוסף חתימה</DialogTitle>
-                  <DialogDescription>
-                    חתום באמצעות העכבר או באצבע במכשיר מגע
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="border rounded-md bg-white p-1 h-[200px]">
-                  <SignatureCanvas
-                    ref={signatureRef}
-                    canvasProps={{
-                      width: 500,
-                      height: 198,
-                      className: 'w-full h-full signature-canvas'
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between">
-                  <Button
-                    type="button" 
-                    variant="outline"
-                    onClick={clearSignature}
-                  >
-                    נקה
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={saveSignature}
-                  >
-                    שמור חתימה
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
           </CardContent>
           <CardFooter className="flex justify-between pb-6">
             <Button 

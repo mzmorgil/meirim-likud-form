@@ -39,6 +39,11 @@ interface SpouseData {
   birthCountry: string;
   immigrationYear?: string;
   signature: string;
+  address: string;
+  city: string;
+  zipCode?: string;
+  mobile: string;
+  email: string;
 }
 
 interface PaymentData {
