@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon, Flag } from 'lucide-react';
+import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon, Flag, Users } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
 import { countries } from '@/utils/countryData';
@@ -114,12 +113,10 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     }
   }, [form.watch('firstName'), form.watch('lastName')]);
 
-  // Monitor birth country to show/hide immigration year field
   useEffect(() => {
     const birthCountry = form.watch('birthCountry');
     setShowImmigrationYear(birthCountry !== 'ישראל');
     
-    // Clear immigration year if birth country is Israel
     if (birthCountry === 'ישראל' && form.getValues('immigrationYear')) {
       form.setValue('immigrationYear', '');
     }
@@ -331,7 +328,10 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 name="maritalStatus"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>מצב משפחתי</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      מצב משפחתי
+                    </FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
