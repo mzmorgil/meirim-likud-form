@@ -25,6 +25,14 @@ const theme = createTheme(
           },
         },
       },
+      MuiInputBase: {
+        styleOverrides: {
+          input: {
+            // Improve immediate feedback on input
+            transition: 'none',
+          },
+        },
+      },
     },
     direction: 'rtl',
   },
@@ -98,6 +106,14 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
                   direction: 'rtl',
                   '& .MuiInputBase-input': { 
                     textAlign: 'right',
+                  },
+                  // Improve immediate feedback by using a monospace font
+                  '& input': {
+                    fontFamily: 'monospace',
+                  },
+                  // Remove animation delay that might be causing the issue
+                  '& .MuiInputBase-root': {
+                    transition: 'none !important',
                   }
                 }
               },
@@ -105,6 +121,8 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
                 actions: ['clear'],
               },
             }}
+            // Reduce any debounce or delay in input processing
+            reduceAnimations={true}
           />
           
           {hebrewDateText && (
