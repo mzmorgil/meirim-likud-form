@@ -94,16 +94,6 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    direction: rtl;
-  }
-  
-  /* RTL specific overrides */
-  .rtl-flip {
-    transform: scaleX(-1);
-  }
-  
-  .rtl-text {
-    text-align: right;
   }
 }
 
@@ -121,65 +111,6 @@
   }
 }
 
-/* Fix RTL for form elements */
-input, textarea, select {
-  text-align: right;
-}
-
-/* Email fields should be LTR since email addresses are always LTR */
-input[type="email"] {
-  direction: ltr;
-  text-align: left;
-}
-
-/* Fix radix select content alignment */
-.radix-select-content,
-[data-radix-select-content],
-[data-radix-popper-content-wrapper] [role="listbox"] {
-  text-align: right !important;
-}
-
-/* Fix radix select dropdown positioning */
-[data-radix-select-content],
-[data-radix-popper-content-wrapper] {
-  text-align: right !important;
-}
-
-/* Fix for RTL positioning of radio items */
-.radio-group-rtl [role="radiogroup"] {
-  display: flex;
-  flex-direction: row-reverse;
-}
-
-/* Fix check positioning in select items */
-[data-radix-select-item] span.absolute {
-  left: auto !important;
-  right: 8px !important;
-}
-
-/* Adjust select dropdown item padding */
-[data-radix-select-item] {
-  padding-right: 32px !important;
-  padding-left: 8px !important;
-}
-
-/* Fix select text alignment in closed state */
-[data-radix-select-trigger] [data-radix-select-value-wrapper] {
-  text-align: right !important;
-  width: 100% !important;
-}
-
-/* Fix select trigger alignment */
-[data-radix-select-trigger] {
-  justify-content: space-between !important;
-}
-
-/* Fix for RTL UI components where needed */
-.rtl-override {
-  direction: ltr;
-}
-
-/* Keep rest of the existing CSS */
 .smooth-scroll {
   scroll-behavior: smooth;
 }
