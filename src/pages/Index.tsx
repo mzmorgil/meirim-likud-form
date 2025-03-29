@@ -2,13 +2,27 @@
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
+import SpouseForm from '@/components/SpouseForm';
+import PaymentForm from '@/components/PaymentForm';
 import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
+import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
-interface FormData {
+type FormData = PrimaryFormValues;
+type SpouseData = PersonFormValues;
+
+interface PaymentData {
+  cardNumber: string;
+  cardholderName: string;
+  expiryDate: string;
+  cvv: string;
+}
+
+// Define a type for the combined data used in PDF generation
+interface PDFFormData {
   idNumber: string;
   firstName: string;
   lastName: string;
@@ -24,22 +38,59 @@ interface FormData {
   mobile: string;
   email: string;
   signature: string;
+  // Additional fields for the PDF that aren't in the base type
+  spouse?: Partial<PersonFormValues>;
+  payment?: PaymentData;
+  includeSpouse?: boolean;
+}
+
+// Type for the preview component props to ensure compatibility
+interface PreviewFormData extends Omit<PDFFormData, 'spouse'> {
+  spouse?: PersonFormValues;
+  payment?: PaymentData;
 }
 
 const Index = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<'form' | 'preview' | 'thankYou'>('form');
+  const [spouseData, setSpouseData] = useState<SpouseData | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const [currentScreen, setCurrentScreen] = useState<'form' | 'spouseForm' | 'paymentForm' | 'preview' | 'thankYou'>('form');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const handleFormSubmit = async (data: FormData) => {
     setFormData(data);
+    
+    if (data.includeSpouse) {
+      setCurrentScreen('spouseForm');
+    } else {
+      setCurrentScreen('paymentForm');
+    }
+  };
+
+  const handleSpouseFormSubmit = (data: SpouseData) => {
+    setSpouseData(data);
+    setCurrentScreen('paymentForm');
+  };
+
+  const handlePaymentSubmit = async (data: PaymentData) => {
+    setPaymentData(data);
     setIsProcessing(true);
     
     try {
-      // Process the PDF to add all form data
-      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, data);
+      if (!formData) {
+        throw new Error('Missing form data');
+      }
+      
+      // Create the combined data for the PDF
+      const pdfData = {
+        ...formData,
+        spouse: spouseData || undefined,
+        payment: data
+      } as PDFFormData; // Use type assertion here
+      
+      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, pdfData);
       setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
@@ -54,19 +105,51 @@ const Index = () => {
   };
 
   const handleBack = () => {
-    setCurrentScreen('form');
+    if (currentScreen === 'spouseForm') {
+      setCurrentScreen('form');
+    } else if (currentScreen === 'paymentForm') {
+      setCurrentScreen(formData?.includeSpouse ? 'spouseForm' : 'form');
+    } else if (currentScreen === 'preview') {
+      setCurrentScreen('paymentForm');
+    }
   };
   
   const handleUploadSuccess = () => {
     setCurrentScreen('thankYou');
   };
 
-  // Clean up object URL on unmount
   useEffect(() => {
     return () => {
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     };
   }, [pdfUrl]);
+
+  // Prepare preview data
+  const getPreviewData = (): PreviewFormData | null => {
+    if (!formData) return null;
+    
+    // Make sure we're returning a complete PreviewFormData object with all required fields
+    return {
+      idNumber: formData.idNumber,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      fatherName: formData.fatherName,
+      birthDate: formData.birthDate,
+      gender: formData.gender,
+      maritalStatus: formData.maritalStatus,
+      birthCountry: formData.birthCountry,
+      immigrationYear: formData.immigrationYear,
+      address: formData.address,
+      city: formData.city,
+      zipCode: formData.zipCode,
+      mobile: formData.mobile,
+      email: formData.email,
+      signature: formData.signature,
+      includeSpouse: formData.includeSpouse,
+      spouse: spouseData || undefined,
+      payment: paymentData || undefined
+    };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
@@ -83,7 +166,11 @@ const Index = () => {
               ? `תודה על ההתפקדות, ${formData.firstName}!`
               : currentScreen === 'preview' && formData
                 ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData.firstName} ${formData.lastName}` 
-                : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
+                : currentScreen === 'spouseForm' && formData
+                  ? `הזנת פרטי בן/בת הזוג של ${formData.firstName} ${formData.lastName}`
+                  : currentScreen === 'paymentForm'
+                    ? "הזנת פרטי תשלום"
+                    : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
           </p>
         </header>
         
@@ -92,11 +179,28 @@ const Index = () => {
             <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
           )}
           
-          {currentScreen === 'preview' && formData && pdfUrl && (
+          {currentScreen === 'spouseForm' && formData && (
+            <SpouseForm 
+              onSubmit={handleSpouseFormSubmit} 
+              onBack={handleBack}
+              isLoading={isProcessing}
+            />
+          )}
+          
+          {currentScreen === 'paymentForm' && (
+            <PaymentForm 
+              onSubmit={handlePaymentSubmit} 
+              onBack={handleBack}
+              isLoading={isProcessing}
+              includeSpouse={formData?.includeSpouse}
+            />
+          )}
+          
+          {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
             <PDFPreview 
               pdfUrl={pdfUrl}
               pdfBlob={pdfBlob}
-              formData={formData}
+              formData={getPreviewData() as PreviewFormData}
               onBack={handleBack}
               onUploadSuccess={handleUploadSuccess}
             />

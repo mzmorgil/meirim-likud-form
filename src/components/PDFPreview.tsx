@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { downloadPdf } from "@/utils/pdfUtils";
 import { uploadFormFiles } from "@/utils/uploadUtils";
 import { useState } from "react";
+import { PersonFormValues } from "./PersonForm";
 
 interface PDFPreviewProps {
   pdfUrl: string | null;
@@ -25,6 +26,14 @@ interface PDFPreviewProps {
     mobile: string;
     email: string;
     signature: string;
+    includeSpouse?: boolean;
+    spouse?: PersonFormValues; // Using the non-partial type for the preview
+    payment?: {
+      cardNumber: string;
+      cardholderName: string;
+      expiryDate: string;
+      cvv: string;
+    };
   };
   onBack: () => void;
   onUploadSuccess: () => void;
@@ -36,7 +45,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   const handleDownload = () => {
     if (!pdfBlob) return;
     
-    // Use the downloadPdf utility with the blob
     downloadPdf(pdfBlob, `התפקדות-לליכוד-${formData.firstName}-${formData.lastName}.pdf`);
     toast.success("המסמך הורד בהצלחה");
   };
@@ -50,10 +58,18 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     setIsUploading(true);
     
     try {
-      // Format date for JSON
       const formattedData = {
         ...formData,
         birthDate: formData.birthDate.toISOString(),
+        spouse: formData.spouse ? {
+          ...formData.spouse,
+          birthDate: formData.spouse.birthDate.toISOString()
+        } : undefined,
+        payment: formData.payment ? {
+          ...formData.payment,
+          cardNumber: `${formData.payment.cardNumber.slice(-4).padStart(formData.payment.cardNumber.length, '*')}`,
+          cvv: '***'
+        } : undefined
       };
       
       await uploadFormFiles(pdfBlob, formattedData);
@@ -67,12 +83,10 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     }
   };
 
-  // Map gender value to Hebrew label
   const getGenderLabel = (gender: string) => {
     return gender === 'ז' ? 'זכר' : gender === 'נ' ? 'נקבה' : gender;
   };
 
-  // Map marital status code to full name
   const getMaritalStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
       'ר': 'רווק/ה',
@@ -81,6 +95,18 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
       'א': 'אלמן/ה'
     };
     return statusMap[status] || status;
+  };
+
+  const formatCreditCard = (number: string) => {
+    return `**** **** **** ${number.slice(-4)}`;
+  };
+  
+  const getPaymentAmount = () => {
+    return formData.includeSpouse ? '96 ₪' : '64 ₪';
+  };
+
+  const getPaymentDescription = () => {
+    return formData.includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
   };
 
   return (
@@ -95,42 +121,89 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 gap-4 mb-4">
         <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h2 className="font-medium mb-2">פרטים אישיים</h2>
-          <ul className="space-y-1 text-sm">
-            <li><span className="font-semibold">תעודת זהות:</span> {formData.idNumber}</li>
-            <li><span className="font-semibold">שם מלא:</span> {formData.firstName} {formData.lastName}</li>
-            <li><span className="font-semibold">שם האב:</span> {formData.fatherName}</li>
-            <li><span className="font-semibold">תאריך לידה:</span> {formData.birthDate.toLocaleDateString('he-IL')}</li>
-            <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.gender)}</li>
-            <li><span className="font-semibold">מצב משפחתי:</span> {getMaritalStatusLabel(formData.maritalStatus)}</li>
-            <li><span className="font-semibold">ארץ לידה:</span> {formData.birthCountry}</li>
-            {formData.immigrationYear && (
-              <li><span className="font-semibold">שנת עלייה:</span> {formData.immigrationYear}</li>
-            )}
-          </ul>
+          <h2 className="font-medium mb-2">פרטי מבקש ההתפקדות הראשי</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ul className="space-y-1 text-sm">
+              <li><span className="font-semibold">תעודת זהות:</span> {formData.idNumber}</li>
+              <li><span className="font-semibold">שם מלא:</span> {formData.firstName} {formData.lastName}</li>
+              <li><span className="font-semibold">שם האב:</span> {formData.fatherName}</li>
+              <li><span className="font-semibold">תאריך לידה:</span> {formData.birthDate.toLocaleDateString('he-IL')}</li>
+              <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.gender)}</li>
+              <li><span className="font-semibold">מצב משפחתי:</span> {getMaritalStatusLabel(formData.maritalStatus)}</li>
+              <li><span className="font-semibold">ארץ לידה:</span> {formData.birthCountry}</li>
+              {formData.immigrationYear && (
+                <li><span className="font-semibold">שנת עלייה:</span> {formData.immigrationYear}</li>
+              )}
+            </ul>
+            
+            <ul className="space-y-1 text-sm">
+              <li><span className="font-semibold">כתובת:</span> {formData.address}</li>
+              <li><span className="font-semibold">יישוב:</span> {formData.city}</li>
+              {formData.zipCode && (
+                <li><span className="font-semibold">מיקוד:</span> {formData.zipCode}</li>
+              )}
+              <li><span className="font-semibold">טלפון נייד:</span> {formData.mobile}</li>
+              <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.email}</li>
+            </ul>
+          </div>
+          
+          <div className="mt-3">
+            <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
+            <div className="flex justify-center">
+              <img src={formData.signature} alt="חתימה" className="max-h-[60px]" />
+            </div>
+          </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h2 className="font-medium mb-2">פרטי התקשרות</h2>
-          <ul className="space-y-1 text-sm">
-            <li><span className="font-semibold">כתובת:</span> {formData.address}</li>
-            <li><span className="font-semibold">יישוב:</span> {formData.city}</li>
-            {formData.zipCode && (
-              <li><span className="font-semibold">מיקוד:</span> {formData.zipCode}</li>
-            )}
-            <li><span className="font-semibold">טלפון נייד:</span> {formData.mobile}</li>
-            <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.email}</li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="p-4 rounded-lg bg-white shadow-sm mb-4">
-        <h2 className="font-medium mb-2">חתימה</h2>
-        <div className="flex justify-center">
-          <img src={formData.signature} alt="חתימה" className="max-h-[100px]" />
-        </div>
+        {formData.spouse && (
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <h2 className="font-medium mb-2">פרטי בן/בת הזוג</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ul className="space-y-1 text-sm">
+                <li><span className="font-semibold">תעודת זהות:</span> {formData.spouse.idNumber}</li>
+                <li><span className="font-semibold">שם מלא:</span> {formData.spouse.firstName} {formData.spouse.lastName}</li>
+                <li><span className="font-semibold">שם האב:</span> {formData.spouse.fatherName}</li>
+                <li><span className="font-semibold">תאריך לידה:</span> {formData.spouse.birthDate.toLocaleDateString('he-IL')}</li>
+                <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.spouse.gender)}</li>
+                <li><span className="font-semibold">ארץ לידה:</span> {formData.spouse.birthCountry}</li>
+                {formData.spouse.immigrationYear && (
+                  <li><span className="font-semibold">שנת עלייה:</span> {formData.spouse.immigrationYear}</li>
+                )}
+              </ul>
+              
+              <ul className="space-y-1 text-sm">
+                <li><span className="font-semibold">כתובת:</span> {formData.spouse.address}</li>
+                <li><span className="font-semibold">יישוב:</span> {formData.spouse.city}</li>
+                {formData.spouse.zipCode && (
+                  <li><span className="font-semibold">מיקוד:</span> {formData.spouse.zipCode}</li>
+                )}
+                <li><span className="font-semibold">טלפון נייד:</span> {formData.spouse.mobile}</li>
+                <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.spouse.email}</li>
+              </ul>
+            </div>
+            
+            <div className="mt-3">
+              <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
+              <div className="flex justify-center">
+                <img src={formData.spouse.signature} alt="חתימת בן/בת הזוג" className="max-h-[60px]" />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {formData.payment && (
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <h2 className="font-medium mb-2">פרטי תשלום</h2>
+            <ul className="space-y-1 text-sm">
+              <li><span className="font-semibold">שם בעל הכרטיס:</span> {formData.payment.cardholderName}</li>
+              <li><span className="font-semibold">מספר כרטיס:</span> <span dir="ltr" className="inline-block">{formatCreditCard(formData.payment.cardNumber)}</span></li>
+              <li><span className="font-semibold">תוקף:</span> {formData.payment.expiryDate}</li>
+              <li><span className="font-semibold">סכום לתשלום:</span> {getPaymentAmount()} ({getPaymentDescription()})</li>
+            </ul>
+          </div>
+        )}
       </div>
 
       {pdfUrl && (
@@ -156,7 +229,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           </>
         ) : (
           <>
-            <Upload className="ml-2 h-5 w-5" /> התפקדות
+            <Upload className="ml-2 h-5 w-5" /> התפקד!
           </>
         )}
       </Button>
@@ -180,7 +253,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             size="sm"
             disabled={isUploading}
           >
-            <Download className="ml-1 h-3 w-3" /> הורד PDF
+            <Download className="ml-1 h-3 w-3" /> שמור עותק טופס התפקדות
           </Button>
         </div>
       </div>
