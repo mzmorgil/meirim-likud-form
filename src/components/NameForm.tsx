@@ -38,6 +38,7 @@ const maritalStatusOptions = [
   { value: 'א', label: 'אלמן/ה', fullLabel: 'אלמן/ה' },
 ];
 
+// Reversed the order to show זכר first since we're in RTL
 const genderOptions = [
   { value: 'ז', label: 'זכר' },
   { value: 'נ', label: 'נקבה' },
@@ -305,15 +306,15 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="flex flex-row space-x-4 space-x-reverse"
+                        className="flex flex-row-reverse justify-end space-x-4 space-x-reverse"
                         disabled={isLoading}
                       >
                         {genderOptions.map(option => (
-                          <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
+                          <div key={option.value} className="flex items-center space-x-2 space-x-reverse mr-0 ml-4">
                             <RadioGroupItem value={option.value} id={`gender-${option.value}`} />
                             <FormLabel
                               htmlFor={`gender-${option.value}`}
-                              className="font-normal cursor-pointer"
+                              className="font-normal cursor-pointer ml-0"
                             >
                               {option.label}
                             </FormLabel>
@@ -338,13 +339,13 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       disabled={isLoading}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-right">
                           <SelectValue placeholder="בחר מצב משפחתי" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent dir="rtl" align="end" className="text-right">
                         {maritalStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <SelectItem key={option.value} value={option.value} className="text-right">
                             {option.fullLabel}
                           </SelectItem>
                         ))}
@@ -370,13 +371,13 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       disabled={isLoading}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-right">
                           <SelectValue placeholder="בחר ארץ לידה" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="max-h-[16rem]">
+                      <SelectContent dir="rtl" className="max-h-[16rem] text-right" align="end">
                         {countries.map((country) => (
-                          <SelectItem key={country.code} value={country.name}>
+                          <SelectItem key={country.code} value={country.name} className="text-right">
                             {country.name}
                           </SelectItem>
                         ))}
@@ -512,11 +513,11 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="הכנס כתובת דואר אלקטרוני" 
+                        placeholder="email@example.com" 
                         {...field} 
-                        className="transition-all focus:ring-2 text-right"
+                        className="transition-all focus:ring-2 text-left"
                         disabled={isLoading}
-                        dir="rtl"
+                        dir="ltr"
                         type="email"
                       />
                     </FormControl>

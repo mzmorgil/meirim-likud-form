@@ -126,6 +126,43 @@ input, textarea, select {
   text-align: right;
 }
 
+/* Email fields should be LTR since email addresses are always LTR */
+input[type="email"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Fix radix select content alignment */
+.radix-select-content,
+[data-radix-select-content],
+[data-radix-popper-content-wrapper] [role="listbox"] {
+  text-align: right !important;
+}
+
+/* Fix radix select dropdown positioning */
+[data-radix-select-content],
+[data-radix-popper-content-wrapper] {
+  text-align: right !important;
+}
+
+/* Fix for RTL positioning of radio items */
+.radio-group-rtl [role="radiogroup"] {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+/* Fix check positioning in select items */
+[data-radix-select-item] span.absolute {
+  left: auto !important;
+  right: 8px !important;
+}
+
+/* Adjust select dropdown item padding */
+[data-radix-select-item] {
+  padding-right: 32px !important;
+  padding-left: 8px !important;
+}
+
 /* Fix for RTL UI components where needed */
 .rtl-override {
   direction: ltr;
