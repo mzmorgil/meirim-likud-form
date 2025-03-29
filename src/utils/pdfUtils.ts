@@ -110,6 +110,7 @@ const addDebugGrid = (
  * Adds form data to a PDF document using an embedded font for vector text
  * @param pdfUrl URL of the base PDF to modify
  * @param formData User's form data to add
+ * @param countries Array of country objects for resolving country names
  * @param debug Optional override for debug grid (overrides environment variable)
  * @returns Blob of the modified PDF
  */
@@ -132,6 +133,7 @@ export const addFormDataToPdf = async (
     email: string;
     signature: string;
   },
+  countries: Array<{ code: string; name: string }>,
   debug?: boolean
 ): Promise<Blob> => {
   try {
