@@ -3,6 +3,7 @@ import React from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TextField } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { heIL } from '@mui/material/locale';
 import dayjs from 'dayjs';
@@ -12,19 +13,20 @@ import { toJewishDate, toHebrewJewishDate } from 'jewish-date';
 // Create theme with Hebrew locale
 const theme = createTheme(
   {
-    direction: 'rtl',
+    typography: {
+      fontFamily: 'inherit',
+    },
     components: {
-      MuiOutlinedInput: {
+      MuiFormHelperText: {
         styleOverrides: {
-          input: {
-            '&::placeholder': {
-              opacity: 1,
-              color: 'rgba(0, 0, 0, 0.6)',
-            },
+          root: {
+            marginTop: 4,
+            fontSize: '0.75rem',
           },
         },
       },
     },
+    direction: 'rtl',
   },
   heIL
 );
@@ -73,7 +75,7 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
 
   // Hebrew date text to display
   const hebrewDateText = value ? getHebrewDateText(value) : '';
-
+  
   return (
     <ThemeProvider theme={theme}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
@@ -83,27 +85,25 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
             onChange={handleDateChange}
             disabled={disabled}
             format="DD/MM/YYYY"
+            openTo="year"
             views={['year', 'month', 'day']}
             slotProps={{
               textField: {
                 placeholder: 'הכנס תאריך',
                 error: error,
-                InputProps: {
-                  sx: {
-                    '& input': {
-                      direction: 'ltr', // Fix for RTL input issues
-                      textAlign: 'right',
-                    }
-                  }
+                InputLabelProps: { 
+                  shrink: true,
                 },
                 sx: { 
                   direction: 'rtl',
+                  '& .MuiInputBase-input': { 
+                    textAlign: 'right',
+                  }
                 }
               },
               actionBar: {
                 actions: ['clear'],
-              }
-              // Removed the unstableFieldRef that was causing the error
+              },
             }}
           />
           
