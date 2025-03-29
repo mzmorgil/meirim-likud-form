@@ -1,18 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon } from 'lucide-react';
+import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon, Flag, Users } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
+import { countries } from '@/utils/countryData';
 
 const isValidIsraeliID = (id: string) => {
   const cleanId = String(id).trim();
@@ -35,6 +37,11 @@ const maritalStatusOptions = [
   { value: 'א', label: 'אלמן/ה', fullLabel: 'אלמן/ה' },
 ];
 
+const genderOptions = [
+  { value: 'ז', label: 'זכר' },
+  { value: 'נ', label: 'נקבה' },
+];
+
 const currentYear = new Date().getFullYear();
 
 const formSchema = z.object({
@@ -48,8 +55,9 @@ const formSchema = z.object({
   birthDate: z.date({
     required_error: "יש לבחור תאריך לידה",
   }),
+  gender: z.string({ required_error: "יש לבחור מין" }),
   maritalStatus: z.string({ required_error: "יש לבחור מצב משפחתי" }),
-  birthCountry: z.string().min(2, { message: "ארץ לידה חייבת להכיל לפחות 2 תווים" }),
+  birthCountry: z.string().min(2, { message: "יש לבחור ארץ לידה" }),
   immigrationYear: z.string().optional()
     .refine(val => !val || (Number(val) >= 1948 && Number(val) <= currentYear), {
       message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
@@ -73,6 +81,7 @@ interface NameFormProps {
 const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const signatureRef = useRef<SignatureCanvas>(null);
+  const [showImmigrationYear, setShowImmigrationYear] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,6 +91,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       lastName: '',
       fatherName: '',
       birthDate: undefined,
+      gender: '',
       maritalStatus: '',
       birthCountry: 'ישראל',
       immigrationYear: '',
@@ -94,7 +104,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const firstName = form.watch('firstName');
     const lastName = form.watch('lastName');
     
@@ -102,6 +112,15 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
       generateAutoSignature(firstName, lastName);
     }
   }, [form.watch('firstName'), form.watch('lastName')]);
+
+  useEffect(() => {
+    const birthCountry = form.watch('birthCountry');
+    setShowImmigrationYear(birthCountry !== 'ישראל');
+    
+    if (birthCountry === 'ישראל' && form.getValues('immigrationYear')) {
+      form.setValue('immigrationYear', '');
+    }
+  }, [form.watch('birthCountry')]);
 
   const generateAutoSignature = (firstName: string, lastName: string) => {
     if (!firstName || !lastName) return;
@@ -275,10 +294,44 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
 
               <FormField
                 control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>מין</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-row space-x-4 space-x-reverse"
+                        disabled={isLoading}
+                      >
+                        {genderOptions.map(option => (
+                          <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
+                            <RadioGroupItem value={option.value} id={`gender-${option.value}`} />
+                            <FormLabel
+                              htmlFor={`gender-${option.value}`}
+                              className="font-normal cursor-pointer"
+                            >
+                              {option.label}
+                            </FormLabel>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="maritalStatus"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>מצב משפחתי</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      מצב משפחתי
+                    </FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -307,43 +360,57 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                 name="birthCountry"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ארץ לידה</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס ארץ לידה" 
-                        {...field} 
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
+                    <FormLabel className="flex items-center gap-2">
+                      <Flag className="h-4 w-4" />
+                      ארץ לידה
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר ארץ לידה" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-[16rem]">
+                        {countries.map((country) => (
+                          <SelectItem key={country.code} value={country.name}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="immigrationYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>שנת עלייה (אם רלוונטי)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="הכנס שנת עלייה" 
-                        {...field} 
-                        type="number"
-                        min="1948"
-                        max={currentYear.toString()}
-                        className="transition-all focus:ring-2 text-right"
-                        disabled={isLoading}
-                        dir="rtl"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {showImmigrationYear && (
+                <FormField
+                  control={form.control}
+                  name="immigrationYear"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>שנת עלייה</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="הכנס שנת עלייה" 
+                          {...field} 
+                          type="number"
+                          min="1948"
+                          max={currentYear.toString()}
+                          className="transition-all focus:ring-2 text-right"
+                          disabled={isLoading}
+                          dir="rtl"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
@@ -510,7 +577,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
             <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>הוסף ��תימה</DialogTitle>
+                  <DialogTitle>הוסף חתימה</DialogTitle>
                   <DialogDescription>
                     חתום באמצעות העכבר או באצבע במכשיר מגע
                   </DialogDescription>

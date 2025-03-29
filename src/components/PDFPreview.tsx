@@ -15,6 +15,7 @@ interface PDFPreviewProps {
     lastName: string;
     fatherName: string;
     birthDate: Date;
+    gender: string;
     maritalStatus: string;
     birthCountry: string;
     immigrationYear?: string;
@@ -66,6 +67,22 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     }
   };
 
+  // Map gender value to Hebrew label
+  const getGenderLabel = (gender: string) => {
+    return gender === 'ז' ? 'זכר' : gender === 'נ' ? 'נקבה' : gender;
+  };
+
+  // Map marital status code to full name
+  const getMaritalStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      'ר': 'רווק/ה',
+      'נ': 'נשוי/אה',
+      'ג': 'גרוש/ה',
+      'א': 'אלמן/ה'
+    };
+    return statusMap[status] || status;
+  };
+
   return (
     <div className="glass p-4 rounded-2xl shadow-lg animate-fade-in max-w-3xl mx-auto" dir="rtl">
       <div className="space-y-1 mb-3">
@@ -86,7 +103,8 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             <li><span className="font-semibold">שם מלא:</span> {formData.firstName} {formData.lastName}</li>
             <li><span className="font-semibold">שם האב:</span> {formData.fatherName}</li>
             <li><span className="font-semibold">תאריך לידה:</span> {formData.birthDate.toLocaleDateString('he-IL')}</li>
-            <li><span className="font-semibold">מצב משפחתי:</span> {formData.maritalStatus}</li>
+            <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.gender)}</li>
+            <li><span className="font-semibold">מצב משפחתי:</span> {getMaritalStatusLabel(formData.maritalStatus)}</li>
             <li><span className="font-semibold">ארץ לידה:</span> {formData.birthCountry}</li>
             {formData.immigrationYear && (
               <li><span className="font-semibold">שנת עלייה:</span> {formData.immigrationYear}</li>
