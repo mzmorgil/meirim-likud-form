@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -7,44 +6,12 @@ import PaymentForm from '@/components/PaymentForm';
 import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
+import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
-interface FormData {
-  idNumber: string;
-  firstName: string;
-  lastName: string;
-  fatherName: string;
-  birthDate: Date;
-  gender: string;
-  maritalStatus: string;
-  birthCountry: string;
-  immigrationYear?: string;
-  address: string;
-  city: string;
-  zipCode?: string;
-  mobile: string;
-  email: string;
-  signature: string;
-  includeSpouse: boolean;
-}
-
-interface SpouseData {
-  idNumber: string;
-  firstName: string;
-  lastName: string;
-  fatherName: string;
-  birthDate: Date;
-  gender: string;
-  birthCountry: string;
-  immigrationYear?: string;
-  signature: string;
-  address: string;
-  city: string;
-  zipCode?: string;
-  mobile: string;
-  email: string;
-}
+type FormData = PrimaryFormValues;
+type SpouseData = PersonFormValues;
 
 interface PaymentData {
   cardNumber: string;
@@ -82,14 +49,12 @@ const Index = () => {
     setIsProcessing(true);
     
     try {
-      // Combine all data
       const combinedData = {
         ...formData,
         spouse: spouseData,
         payment: data
       };
       
-      // Process the PDF to add all form data
       const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, combinedData);
       setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
@@ -118,7 +83,6 @@ const Index = () => {
     setCurrentScreen('thankYou');
   };
 
-  // Clean up object URL on unmount
   useEffect(() => {
     return () => {
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
