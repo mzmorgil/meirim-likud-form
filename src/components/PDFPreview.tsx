@@ -1,10 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { downloadPdf } from "@/utils/pdfUtils";
 import { uploadFormFiles } from "@/utils/uploadUtils";
 import { useState } from "react";
+import { PersonFormValues } from "./PersonForm";
 
 interface PDFPreviewProps {
   pdfUrl: string | null;
@@ -26,22 +26,7 @@ interface PDFPreviewProps {
     email: string;
     signature: string;
     includeSpouse?: boolean;
-    spouse?: {
-      idNumber: string;
-      firstName: string;
-      lastName: string;
-      fatherName: string;
-      birthDate: Date;
-      gender: string;
-      birthCountry: string;
-      immigrationYear?: string;
-      signature: string;
-      address: string;
-      city: string;
-      zipCode?: string;
-      mobile: string;
-      email: string;
-    };
+    spouse?: PersonFormValues;
     payment?: {
       cardNumber: string;
       cardholderName: string;

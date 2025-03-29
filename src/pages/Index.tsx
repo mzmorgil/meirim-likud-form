@@ -39,9 +39,15 @@ interface PDFFormData {
   email: string;
   signature: string;
   // Additional fields for the PDF that aren't in the base type
-  spouse?: PersonFormValues;
+  spouse?: Partial<PersonFormValues>;
   payment?: PaymentData;
   includeSpouse?: boolean;
+}
+
+// Type for the preview component props to ensure compatibility
+interface PreviewFormData extends PDFFormData {
+  spouse?: PersonFormValues;
+  payment?: PaymentData;
 }
 
 const Index = () => {
@@ -78,11 +84,11 @@ const Index = () => {
       }
       
       // Create the combined data for the PDF
-      const pdfData: PDFFormData = {
+      const pdfData = {
         ...formData,
         spouse: spouseData || undefined,
         payment: data
-      };
+      } as PDFFormData; // Use type assertion here
       
       const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, pdfData);
       setPdfBlob(modifiedPdfBlob);
@@ -117,6 +123,17 @@ const Index = () => {
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     };
   }, [pdfUrl]);
+
+  // Prepare preview data
+  const getPreviewData = (): PreviewFormData | null => {
+    if (!formData) return null;
+    
+    return {
+      ...formData,
+      spouse: spouseData || undefined,
+      payment: paymentData || undefined
+    };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
@@ -167,7 +184,7 @@ const Index = () => {
             <PDFPreview 
               pdfUrl={pdfUrl}
               pdfBlob={pdfBlob}
-              formData={formData as PDFFormData}
+              formData={getPreviewData() as PreviewFormData}
               onBack={handleBack}
               onUploadSuccess={handleUploadSuccess}
             />

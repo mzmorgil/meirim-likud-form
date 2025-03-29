@@ -1,5 +1,6 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
+import { PersonFormValues } from '@/components/PersonForm';
 
 // Debug mode can be enabled via environment variable or directly in code
 const DEBUG_PDF_GRID = import.meta.env.VITE_DEBUG_PDF_GRID === 'true' || false;
@@ -131,8 +132,13 @@ export const addFormDataToPdf = async (
     mobile: string;
     email: string;
     signature: string;
-    spouse?: any;
-    payment?: any;
+    spouse?: Partial<PersonFormValues>;
+    payment?: {
+      cardNumber: string;
+      cardholderName: string;
+      expiryDate: string;
+      cvv: string;
+    };
   },
   debug?: boolean
 ): Promise<Blob> => {
