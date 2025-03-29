@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +22,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ name }) => {
             ההתפקדות שלך לליכוד התקבלה בהצלחה.
           </p>
           <p>
-            אנו מודים לך על הצטרפותך למפלגת הליכוד באמצעות מאירים - חינוך זה מסורת.
+            אנו מודים לך על הצטרפותך למפלגת הליכוד באמצעות דורית יצחק.
           </p>
         </CardContent>
         <CardFooter className="flex justify-center">

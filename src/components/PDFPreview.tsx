@@ -74,7 +74,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
         </div>
         <h1 className="text-lg font-medium">טופס ההתפקדות שלך מוכן</h1>
         <p className="text-sm text-muted-foreground">
-          להלן טופס ההתפקדות לליכוד באמצעות מאירים - חינוך זה מסורת
+          להלן טופס ההתפקדות לליכוד באמצעות דורית יצחק
         </p>
       </div>
 

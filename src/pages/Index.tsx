@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -72,7 +71,7 @@ const Index = () => {
       <div className="max-w-6xl mx-auto">
         <header className="mb-12 text-center">
           <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
-            מאירים - חינוך זה מסורת
+            דורית יצחק
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
             התפקדות לליכוד
@@ -108,7 +107,7 @@ const Index = () => {
         
         <footer className="mt-16 text-center text-sm text-muted-foreground">
           <p className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            כל הזכויות שמורות © מאירים - חינוך זה מסורת
+            כל הזכויות שמורות &copy; דורית יצחק
           </p>
         </footer>
       </div>
