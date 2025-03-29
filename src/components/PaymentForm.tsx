@@ -82,9 +82,10 @@ interface PaymentFormProps {
   onSubmit: (data: FormValues) => void;
   onBack: () => void;
   isLoading?: boolean;
+  includeSpouse?: boolean;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading = false }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading = false, includeSpouse = false }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -138,6 +139,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
     onSubmit(cleanedValues);
   };
 
+  // Calculate payment amount based on whether spouse is included
+  const getPaymentAmount = () => {
+    return includeSpouse ? '96 ₪' : '64 ₪';
+  };
+
+  // Get payment description
+  const getPaymentDescription = () => {
+    return includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
@@ -164,6 +175,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
                         className="transition-all focus:ring-2 text-right"
                         disabled={isLoading}
                         dir="rtl"
+                        autoComplete="cc-name"
                       />
                     </FormControl>
                     <FormMessage />
@@ -188,11 +200,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
                           field.onChange(e);
                           handleCreditCardChange(e);
                         }}
-                        className="transition-all focus:ring-2 text-right font-mono"
+                        className="transition-all focus:ring-2 text-left font-mono ltr"
                         disabled={isLoading}
-                        dir="rtl"
+                        dir="ltr"
                         maxLength={19}
                         inputMode="numeric"
+                        autoComplete="cc-number"
                       />
                     </FormControl>
                     <FormMessage />
@@ -218,11 +231,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
                             field.onChange(e);
                             handleExpiryDateChange(e);
                           }}
-                          className="transition-all focus:ring-2 text-right font-mono"
+                          className="transition-all focus:ring-2 text-left font-mono ltr"
                           disabled={isLoading}
-                          dir="rtl"
+                          dir="ltr"
                           maxLength={5}
                           inputMode="numeric"
+                          autoComplete="cc-exp"
                         />
                       </FormControl>
                       <FormMessage />
@@ -243,12 +257,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
                         <Input 
                           placeholder="123" 
                           {...field} 
-                          className="transition-all focus:ring-2 text-right font-mono"
+                          className="transition-all focus:ring-2 text-left font-mono ltr"
                           disabled={isLoading}
-                          dir="rtl"
+                          dir="ltr"
                           maxLength={4}
                           type="password"
                           inputMode="numeric"
+                          autoComplete="cc-csc"
                         />
                       </FormControl>
                       <FormMessage />
@@ -260,7 +275,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
 
             <div className="bg-muted/50 p-3 rounded-md text-sm">
               <p className="text-muted-foreground">
-                פרטי האשראי מאובטחים ומוצפנים. הסכום שיחויב הוא 49 ש"ח לכל מתפקד.
+                פרטי האשראי מאובטחים ומוצפנים. הסכום שיחויב הוא {getPaymentAmount()} {getPaymentDescription()}.
               </p>
             </div>
           </CardContent>

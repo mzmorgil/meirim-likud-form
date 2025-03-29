@@ -115,6 +115,16 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   const formatCreditCard = (number: string) => {
     return `**** **** **** ${number.slice(-4)}`;
   };
+  
+  // Calculate payment amount based on whether spouse is included
+  const getPaymentAmount = () => {
+    return formData.includeSpouse ? '96 ₪' : '64 ₪';
+  };
+
+  // Get payment description
+  const getPaymentDescription = () => {
+    return formData.includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
+  };
 
   return (
     <div className="glass p-4 rounded-2xl shadow-lg animate-fade-in max-w-3xl mx-auto" dir="rtl">
@@ -197,7 +207,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               <li><span className="font-semibold">שם בעל הכרטיס:</span> {formData.payment.cardholderName}</li>
               <li><span className="font-semibold">מספר כרטיס:</span> {formatCreditCard(formData.payment.cardNumber)}</li>
               <li><span className="font-semibold">תוקף:</span> {formData.payment.expiryDate}</li>
-              <li><span className="font-semibold">סכום לתשלום:</span> {formData.spouse ? '98 ₪' : '49 ₪'} ({formData.spouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד'})</li>
+              <li><span className="font-semibold">סכום לתשלום:</span> {getPaymentAmount()} ({getPaymentDescription()})</li>
             </ul>
           </div>
         )}

@@ -161,6 +161,7 @@ const Index = () => {
               onSubmit={handlePaymentSubmit} 
               onBack={handleBack}
               isLoading={isProcessing}
+              includeSpouse={formData?.includeSpouse}
             />
           )}
           
