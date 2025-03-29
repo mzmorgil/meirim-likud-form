@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select as UISelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon, Flag } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
-import Select from 'react-select';
+import ReactSelect from 'react-select';
 import { useCountries, getCountryFlagUrl } from '@/utils/countryData';
 
 const isValidIsraeliID = (id: string) => {
@@ -404,18 +404,16 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       disabled={isLoading}
                     >
                       <FormControl>
-                        <UISelect>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר מצב משפחתי" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {maritalStatusOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.fullLabel}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </UISelect>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר מצב משפחתי" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {maritalStatusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.fullLabel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </FormControl>
                     </Select>
                     <FormMessage />
@@ -434,7 +432,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                     </FormLabel>
                     <FormControl>
                       <div>
-                        <Select
+                        <ReactSelect
                           inputId="country-select"
                           options={countryOptions}
                           value={countryOptions.find(option => option.value === field.value) || defaultCountry}
