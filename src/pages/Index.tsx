@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -18,6 +19,29 @@ interface PaymentData {
   cardholderName: string;
   expiryDate: string;
   cvv: string;
+}
+
+// Define a type for the combined data used in PDF generation
+interface PDFFormData {
+  idNumber: string;
+  firstName: string;
+  lastName: string;
+  fatherName: string;
+  birthDate: Date;
+  gender: string;
+  maritalStatus: string;
+  birthCountry: string;
+  immigrationYear?: string;
+  address: string;
+  city: string;
+  zipCode?: string;
+  mobile: string;
+  email: string;
+  signature: string;
+  // Additional fields for the PDF that aren't in the base type
+  spouse?: PersonFormValues;
+  payment?: PaymentData;
+  includeSpouse?: boolean;
 }
 
 const Index = () => {
@@ -49,13 +73,18 @@ const Index = () => {
     setIsProcessing(true);
     
     try {
-      const combinedData = {
+      if (!formData) {
+        throw new Error('Missing form data');
+      }
+      
+      // Create the combined data for the PDF
+      const pdfData: PDFFormData = {
         ...formData,
-        spouse: spouseData,
+        spouse: spouseData || undefined,
         payment: data
       };
       
-      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, combinedData);
+      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, pdfData);
       setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
@@ -134,15 +163,11 @@ const Index = () => {
             />
           )}
           
-          {currentScreen === 'preview' && formData && pdfUrl && (
+          {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
             <PDFPreview 
               pdfUrl={pdfUrl}
               pdfBlob={pdfBlob}
-              formData={{
-                ...formData,
-                spouse: spouseData,
-                payment: paymentData
-              }}
+              formData={formData as PDFFormData}
               onBack={handleBack}
               onUploadSuccess={handleUploadSuccess}
             />

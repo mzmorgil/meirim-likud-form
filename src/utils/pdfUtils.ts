@@ -131,6 +131,8 @@ export const addFormDataToPdf = async (
     mobile: string;
     email: string;
     signature: string;
+    spouse?: any;
+    payment?: any;
   },
   debug?: boolean
 ): Promise<Blob> => {
