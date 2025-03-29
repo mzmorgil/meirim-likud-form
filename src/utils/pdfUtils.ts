@@ -18,6 +18,7 @@ type FormFields = {
   lastName?: FormPosition;
   fatherName?: FormPosition;
   birthDate?: FormPosition;
+  gender?: FormPosition;
   maritalStatus?: FormPosition;
   birthCountry?: FormPosition;
   immigrationYear?: FormPosition;
@@ -25,7 +26,8 @@ type FormFields = {
   city?: FormPosition;
   zipCode?: FormPosition;
   mobile?: FormPosition;
-  email?: FormPosition;
+  emailUsername?: FormPosition;
+  emailDomain?: FormPosition;
   signature?: FormPosition;
 };
 
@@ -36,6 +38,7 @@ const FORM_FIELDS: FormFields = {
   lastName: { x: 325, y: 685, fontSize: 12 },
   fatherName: { x: 390, y: 625, fontSize: 12 },
   birthDate: { x: 390, y: 600, fontSize: 12 },
+  gender: { x: 280, y: 600, fontSize: 12 },
   maritalStatus: { x: 390, y: 575, fontSize: 12 },
   birthCountry: { x: 200, y: 575, fontSize: 12 },
   immigrationYear: { x: 390, y: 550, fontSize: 12 },
@@ -43,7 +46,8 @@ const FORM_FIELDS: FormFields = {
   city: { x: 200, y: 525, fontSize: 12 },
   zipCode: { x: 390, y: 500, fontSize: 12 },
   mobile: { x: 390, y: 475, fontSize: 12 },
-  email: { x: 200, y: 475, fontSize: 12 },
+  emailUsername: { x: 300, y: 475, fontSize: 12 },
+  emailDomain: { x: 200, y: 475, fontSize: 12 },
   signature: { x: 300, y: 300, maxWidth: 150 },
 };
 
@@ -117,6 +121,7 @@ export const addFormDataToPdf = async (
     lastName: string;
     fatherName: string;
     birthDate: Date;
+    gender: string;
     maritalStatus: string;
     birthCountry: string;
     immigrationYear?: string;
@@ -170,12 +175,18 @@ export const addFormDataToPdf = async (
     };
     const maritalStatusText = maritalStatusMap[formData.maritalStatus] || formData.maritalStatus;
 
+    // Split email into username and domain parts for better placement on PDF
+    const emailParts = formData.email.split('@');
+    const emailUsername = emailParts[0];
+    const emailDomain = emailParts.length > 1 ? `@${emailParts[1]}` : '';
+
     // Add all text fields with the embedded font
     await addTextToPdf(page, customFont, formData.idNumber, FORM_FIELDS.idNumber);
     await addTextToPdf(page, customFont, formData.firstName, FORM_FIELDS.firstName);
     await addTextToPdf(page, customFont, formData.lastName, FORM_FIELDS.lastName);
     await addTextToPdf(page, customFont, formData.fatherName, FORM_FIELDS.fatherName);
     await addTextToPdf(page, customFont, formattedBirthDate, FORM_FIELDS.birthDate);
+    await addTextToPdf(page, customFont, formData.gender, FORM_FIELDS.gender);
     await addTextToPdf(page, customFont, maritalStatusText, FORM_FIELDS.maritalStatus);
     await addTextToPdf(page, customFont, formData.birthCountry, FORM_FIELDS.birthCountry);
     if (formData.immigrationYear) {
@@ -187,7 +198,10 @@ export const addFormDataToPdf = async (
       await addTextToPdf(page, customFont, formData.zipCode, FORM_FIELDS.zipCode);
     }
     await addTextToPdf(page, customFont, formData.mobile, FORM_FIELDS.mobile);
-    await addTextToPdf(page, customFont, formData.email, FORM_FIELDS.email);
+    
+    // Add email as separate parts for better positioning
+    await addTextToPdf(page, customFont, emailUsername, FORM_FIELDS.emailUsername);
+    await addTextToPdf(page, customFont, emailDomain, FORM_FIELDS.emailDomain);
 
     // Add signature (still as an image)
     if (formData.signature) {

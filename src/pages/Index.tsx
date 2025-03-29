@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -13,6 +14,7 @@ interface FormData {
   lastName: string;
   fatherName: string;
   birthDate: Date;
+  gender: string;
   maritalStatus: string;
   birthCountry: string;
   immigrationYear?: string;
