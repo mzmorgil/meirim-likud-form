@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select as UISelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,7 +14,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw, User, Mail, Phone, UserRound, Home, Hash, Signature, Calendar as CalendarIcon, Flag } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
-import { countries } from '@/utils/countryData';
+import Select from 'react-select';
+import { useCountries, getCountryFlagUrl } from '@/utils/countryData';
 
 const isValidIsraeliID = (id: string) => {
   const cleanId = String(id).trim();
@@ -83,6 +83,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const signatureRef = useRef<SignatureCanvas>(null);
   const [showImmigrationYear, setShowImmigrationYear] = useState(false);
+  const { countries, isLoading: isLoadingCountries } = useCountries();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,6 +106,15 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     },
   });
 
+  const countryOptions = countries.map(country => ({
+    value: country.name,
+    label: country.name,
+    code: country.code
+  }));
+
+  const defaultCountry = countryOptions.find(option => option.value === 'ישראל') || 
+                         { value: 'ישראל', label: 'ישראל', code: 'il' };
+
   useEffect(() => {
     const firstName = form.watch('firstName');
     const lastName = form.watch('lastName');
@@ -114,12 +124,10 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     }
   }, [form.watch('firstName'), form.watch('lastName')]);
 
-  // Monitor birth country to show/hide immigration year field
   useEffect(() => {
     const birthCountry = form.watch('birthCountry');
     setShowImmigrationYear(birthCountry !== 'ישראל');
     
-    // Clear immigration year if birth country is Israel
     if (birthCountry === 'ישראל' && form.getValues('immigrationYear')) {
       form.setValue('immigrationYear', '');
     }
@@ -168,8 +176,66 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
     onSubmit(values);
   };
 
+  const selectStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      borderColor: '#e2e8f0',
+      minHeight: '40px',
+      boxShadow: 'none',
+      '&:hover': {
+        borderColor: '#cbd5e1',
+      }
+    }),
+    menu: (provided: any) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      display: 'flex',
+      alignItems: 'center',
+      padding: '8px 12px',
+      backgroundColor: state.isSelected ? '#f1f5f9' : provided.backgroundColor,
+      color: state.isSelected ? 'black' : provided.color,
+      '&:hover': {
+        backgroundColor: '#f8fafc',
+      }
+    })
+  };
+
+  const CountryOption = ({ innerProps, data, isSelected }: any) => (
+    <div 
+      {...innerProps} 
+      className={`flex items-center py-2 px-3 ${isSelected ? 'bg-accent' : 'hover:bg-accent/50'} cursor-pointer`}
+    >
+      <img 
+        src={getCountryFlagUrl(data.code)} 
+        alt={`דגל ${data.label}`}
+        className="ml-2 h-4"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+      <span>{data.label}</span>
+    </div>
+  );
+
+  const CountrySingleValue = ({ data }: any) => (
+    <div className="flex items-center">
+      <img 
+        src={getCountryFlagUrl(data.code)} 
+        alt={`דגל ${data.label}`}
+        className="ml-2 h-4"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+      <span>{data.label}</span>
+    </div>
+  );
+
   return (
-    <Card className="w-full max-w-3xl mx-auto animate-fade-up" dir="rtl">
+    <Card className="w-full max-w-3xl mx-auto animate-fade-up">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">הזנת פרטים</CardTitle>
       </CardHeader>
@@ -338,17 +404,19 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       disabled={isLoading}
                     >
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר מצב משפחתי" />
-                        </SelectTrigger>
+                        <UISelect>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר מצב משפחתי" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {maritalStatusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.fullLabel}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </UISelect>
                       </FormControl>
-                      <SelectContent>
-                        {maritalStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.fullLabel}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -364,24 +432,33 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
                       <Flag className="h-4 w-4" />
                       ארץ לידה
                     </FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר ארץ לידה" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="max-h-[16rem]">
-                        {countries.map((country) => (
-                          <SelectItem key={country.code} value={country.name}>
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <div>
+                        <Select
+                          inputId="country-select"
+                          options={countryOptions}
+                          value={countryOptions.find(option => option.value === field.value) || defaultCountry}
+                          onChange={(option) => {
+                            if (option) {
+                              field.onChange(option.value);
+                            }
+                          }}
+                          isDisabled={isLoading || isLoadingCountries}
+                          placeholder="בחר ארץ לידה"
+                          isSearchable={true}
+                          styles={selectStyles}
+                          className="country-select-container"
+                          classNamePrefix="country-select"
+                          isRtl={true}
+                          components={{
+                            Option: CountryOption,
+                            SingleValue: CountrySingleValue
+                          }}
+                          noOptionsMessage={() => "לא נמצאו תוצאות"}
+                          loadingMessage={() => "טוען מדינות..."}
+                        />
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
