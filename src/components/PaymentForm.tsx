@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, RefreshCw, CreditCard, User, CalendarDays, Lock } from 'lucide-react';
+import { ArrowRight, RefreshCw, CreditCard, User, CalendarDays, Lock, Eye } from 'lucide-react';
 
 // Credit card validation functions
 const validateCreditCardNumber = (number: string): boolean => {
@@ -301,7 +301,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
                   מעבד...
                 </>
               ) : (
-                'המשך לתצוגה מקדימה'
+                <>
+                  <Eye className="ml-2 h-4 w-4" />
+                  צפה בטופס לפני שליחה
+                </>
               )}
             </Button>
           </CardFooter>
