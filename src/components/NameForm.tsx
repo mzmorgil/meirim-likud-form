@@ -149,7 +149,7 @@ const NameForm: React.FC<NameFormProps> = ({ onSubmit, isLoading = false }) => {
   return (
     <Card className="w-full max-w-3xl mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">התפקדות לליכוד - מאירים</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">הזנת פרטים</CardTitle>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
