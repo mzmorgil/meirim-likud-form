@@ -5,7 +5,6 @@ import NameForm from '@/components/NameForm';
 import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
-import { useCountries } from '@/utils/countryData';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
@@ -33,7 +32,6 @@ const Index = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { countries } = useCountries();
   
   const handleFormSubmit = async (data: FormData) => {
     setFormData(data);
@@ -41,7 +39,7 @@ const Index = () => {
     
     try {
       // Process the PDF to add all form data
-      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, data, countries);
+      const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, data);
       setPdfBlob(modifiedPdfBlob);
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
@@ -71,7 +69,7 @@ const Index = () => {
   }, [pdfUrl]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
         <header className="mb-12 text-center">
           <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
@@ -94,7 +92,7 @@ const Index = () => {
             <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
           )}
           
-          {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
+          {currentScreen === 'preview' && formData && pdfUrl && (
             <PDFPreview 
               pdfUrl={pdfUrl}
               pdfBlob={pdfBlob}

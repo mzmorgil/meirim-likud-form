@@ -94,7 +94,6 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    direction: rtl;
   }
 }
 
@@ -136,70 +135,4 @@
   100% {
     background-position: 200% 0;
   }
-}
-
-/* RTL specific styles */
-.country-select-container .country-select__control {
-  min-height: 40px;
-  border-color: hsl(var(--input));
-  background-color: transparent;
-  border-radius: var(--radius);
-  padding: 0 0.5rem;
-}
-
-.country-select-container .country-select__control:hover {
-  border-color: hsl(var(--input));
-}
-
-.country-select-container .country-select__control--is-focused {
-  border-color: hsl(var(--ring));
-  box-shadow: 0 0 0 1px hsl(var(--ring));
-}
-
-.country-select-container .country-select__menu {
-  background-color: hsl(var(--popover));
-  color: hsl(var(--popover-foreground));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  z-index: 100;
-}
-
-.country-select-container .country-select__indicator-separator {
-  display: none;
-}
-
-.country-select-container .country-select__dropdown-indicator {
-  color: hsl(var(--foreground));
-}
-
-.country-select-container .country-select__placeholder {
-  color: hsl(var(--muted-foreground));
-}
-
-.country-select-container .country-select__single-value {
-  color: hsl(var(--foreground));
-}
-
-/* Override specific elements for RTL */
-.form-label {
-  text-align: right;
-}
-
-.form-message {
-  text-align: right;
-}
-
-/* Fix for radix UI components in RTL */
-[dir="rtl"] .radix-select-content {
-  text-align: right;
-}
-
-[dir="rtl"] .radix-dropdown-menu-content {
-  text-align: right;
-}
-
-/* Fix for signature canvas in RTL */
-.signature-canvas {
-  direction: ltr;
 }
