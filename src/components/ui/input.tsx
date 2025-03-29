@@ -5,6 +5,16 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, dir, ...props }, ref) => {
+    // Automatically set dir to ltr for credit card related inputs
+    const isCardField = props.name?.includes('card') || 
+                         props.name?.includes('cvv') || 
+                         props.name?.includes('expiry') || 
+                         props.id?.includes('card') ||
+                         props.id?.includes('cvv') ||
+                         props.id?.includes('expiry');
+    
+    const inputDir = dir || (isCardField ? "ltr" : "rtl");
+    
     return (
       <input
         type={type}
@@ -13,7 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
-        dir={dir || "rtl"}
+        dir={inputDir}
         {...props}
       />
     )

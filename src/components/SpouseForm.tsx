@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,15 +93,6 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
       signature: '',
     },
   });
-
-  useEffect(() => {
-    const firstName = form.watch('firstName');
-    const lastName = form.watch('lastName');
-    
-    if (firstName && lastName && !form.getValues('signature')) {
-      generateAutoSignature(firstName, lastName);
-    }
-  }, [form.watch('firstName'), form.watch('lastName')]);
 
   useEffect(() => {
     const birthCountry = form.watch('birthCountry');
@@ -371,7 +361,6 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
                 />
               )}
               
-              {/* Start of the added contact details section */}
               <FormField
                 control={form.control}
                 name="address"
@@ -484,7 +473,6 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
                   </FormItem>
                 )}
               />
-              {/* End of the added contact details section */}
             </div>
 
             <FormField

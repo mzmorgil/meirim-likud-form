@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +35,11 @@ interface PDFPreviewProps {
       birthCountry: string;
       immigrationYear?: string;
       signature: string;
+      address: string;
+      city: string;
+      zipCode?: string;
+      mobile: string;
+      email: string;
     };
     payment?: {
       cardNumber: string;
@@ -54,7 +58,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   const handleDownload = () => {
     if (!pdfBlob) return;
     
-    // Use the downloadPdf utility with the blob
     downloadPdf(pdfBlob, `התפקדות-לליכוד-${formData.firstName}-${formData.lastName}.pdf`);
     toast.success("המסמך הורד בהצלחה");
   };
@@ -68,7 +71,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     setIsUploading(true);
     
     try {
-      // Format dates for JSON
       const formattedData = {
         ...formData,
         birthDate: formData.birthDate.toISOString(),
@@ -76,7 +78,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           ...formData.spouse,
           birthDate: formData.spouse.birthDate.toISOString()
         } : undefined,
-        // Mask sensitive payment information for security
         payment: formData.payment ? {
           ...formData.payment,
           cardNumber: `${formData.payment.cardNumber.slice(-4).padStart(formData.payment.cardNumber.length, '*')}`,
@@ -95,12 +96,10 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     }
   };
 
-  // Map gender value to Hebrew label
   const getGenderLabel = (gender: string) => {
     return gender === 'ז' ? 'זכר' : gender === 'נ' ? 'נקבה' : gender;
   };
 
-  // Map marital status code to full name
   const getMaritalStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
       'ר': 'רווק/ה',
@@ -111,17 +110,14 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     return statusMap[status] || status;
   };
 
-  // Format credit card number to show only last 4 digits
   const formatCreditCard = (number: string) => {
     return `**** **** **** ${number.slice(-4)}`;
   };
   
-  // Calculate payment amount based on whether spouse is included
   const getPaymentAmount = () => {
     return formData.includeSpouse ? '96 ₪' : '64 ₪';
   };
 
-  // Get payment description
   const getPaymentDescription = () => {
     return formData.includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
   };
@@ -190,11 +186,21 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
                 )}
               </ul>
               
-              <div className="flex flex-col items-start justify-end">
-                <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
-                <div className="flex justify-center w-full">
-                  <img src={formData.spouse.signature} alt="חתימת בן/בת הזוג" className="max-h-[60px]" />
-                </div>
+              <ul className="space-y-1 text-sm">
+                <li><span className="font-semibold">כתובת:</span> {formData.spouse.address}</li>
+                <li><span className="font-semibold">יישוב:</span> {formData.spouse.city}</li>
+                {formData.spouse.zipCode && (
+                  <li><span className="font-semibold">מיקוד:</span> {formData.spouse.zipCode}</li>
+                )}
+                <li><span className="font-semibold">טלפון נייד:</span> {formData.spouse.mobile}</li>
+                <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.spouse.email}</li>
+              </ul>
+            </div>
+            
+            <div className="mt-3">
+              <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
+              <div className="flex justify-center">
+                <img src={formData.spouse.signature} alt="חתימת בן/בת הזוג" className="max-h-[60px]" />
               </div>
             </div>
           </div>
@@ -205,7 +211,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             <h2 className="font-medium mb-2">פרטי תשלום</h2>
             <ul className="space-y-1 text-sm">
               <li><span className="font-semibold">שם בעל הכרטיס:</span> {formData.payment.cardholderName}</li>
-              <li><span className="font-semibold">מספר כרטיס:</span> {formatCreditCard(formData.payment.cardNumber)}</li>
+              <li><span className="font-semibold">מספר כרטיס:</span> <span dir="ltr" className="inline-block">{formatCreditCard(formData.payment.cardNumber)}</span></li>
               <li><span className="font-semibold">תוקף:</span> {formData.payment.expiryDate}</li>
               <li><span className="font-semibold">סכום לתשלום:</span> {getPaymentAmount()} ({getPaymentDescription()})</li>
             </ul>
