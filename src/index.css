@@ -163,6 +163,17 @@ input[type="email"] {
   padding-left: 8px !important;
 }
 
+/* Fix select text alignment in closed state */
+[data-radix-select-trigger] [data-radix-select-value-wrapper] {
+  text-align: right !important;
+  width: 100% !important;
+}
+
+/* Fix select trigger alignment */
+[data-radix-select-trigger] {
+  justify-content: space-between !important;
+}
+
 /* Fix for RTL UI components where needed */
 .rtl-override {
   direction: ltr;

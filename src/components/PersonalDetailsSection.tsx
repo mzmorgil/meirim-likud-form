@@ -153,7 +153,7 @@ const PersonalDetailsSection: React.FC<PersonalDetailsSectionProps> = ({
               <RadioGroup
                 onValueChange={field.onChange}
                 defaultValue={field.value}
-                className="flex flex-row-reverse justify-end space-x-4 space-x-reverse"
+                className="flex flex-row justify-end space-x-4 space-x-reverse"
                 disabled={isLoading}
               >
                 {genderOptions.map(option => (
