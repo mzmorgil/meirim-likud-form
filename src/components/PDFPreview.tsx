@@ -229,7 +229,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           </>
         ) : (
           <>
-            <Upload className="ml-2 h-5 w-5" /> התפקדות
+            <Upload className="ml-2 h-5 w-5" /> התפקד!
           </>
         )}
       </Button>
@@ -253,7 +253,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             size="sm"
             disabled={isUploading}
           >
-            <Download className="ml-1 h-3 w-3" /> הורד PDF
+            <Download className="ml-1 h-3 w-3" /> שמור עותק טופס התפקדות
           </Button>
         </div>
       </div>

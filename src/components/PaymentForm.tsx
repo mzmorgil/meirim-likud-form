@@ -303,7 +303,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
               ) : (
                 <>
                   <Eye className="ml-2 h-4 w-4" />
-                  צפה בטופס לפני שליחה
+                  הכן מסמך התפקדות
                 </>
               )}
             </Button>

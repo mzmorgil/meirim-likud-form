@@ -93,10 +93,11 @@ const PersonForm: React.FC<PersonFormProps> = ({
   const watchBirthCountry = form.watch('birthCountry');
 
   useEffect(() => {
-    if (watchFirstName && watchLastName && !form.getValues('signature')) {
+    // Only auto-generate signature for primary applicant, not for spouse
+    if (isPrimary && watchFirstName && watchLastName && !form.getValues('signature')) {
       generateAutoSignature(watchFirstName, watchLastName);
     }
-  }, [watchFirstName, watchLastName]);
+  }, [watchFirstName, watchLastName, isPrimary]);
 
   const generateAutoSignature = (firstName: string, lastName: string) => {
     if (!firstName || !lastName) return;
