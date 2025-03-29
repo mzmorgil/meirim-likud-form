@@ -102,20 +102,8 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
               },
               actionBar: {
                 actions: ['clear'],
-              },
-              // Force immediate update of the input field
-              field: {
-                unstableFieldRef: (element: any) => {
-                  if (element) {
-                    const inputElement = element.querySelector('input');
-                    if (inputElement) {
-                      // Remove any existing input event listeners
-                      const newInputElement = inputElement.cloneNode(true);
-                      inputElement.parentNode.replaceChild(newInputElement, inputElement);
-                    }
-                  }
-                },
               }
+              // Removed the unstableFieldRef that was causing the error
             }}
           />
           
