@@ -7,21 +7,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, RefreshCw } from 'lucide-react';
-import PersonalInfoForm, { currentYear } from './PersonalInfoForm';
-
-const isValidIsraeliID = (id: string) => {
-  const cleanId = String(id).trim();
-  if (cleanId.length > 9 || cleanId.length < 5 || isNaN(Number(cleanId))) return false;
-
-  const paddedId = cleanId.length < 9 ? ("00000000" + cleanId).slice(-9) : cleanId;
-
-  return Array
-    .from(paddedId, Number)
-    .reduce((counter, digit, i) => {
-      const step = digit * ((i % 2) + 1);
-      return counter + (step > 9 ? step - 9 : step);
-    }, 0) % 10 === 0;
-};
+import PersonalInfoForm, { currentYear, isValidIsraeliID, maritalStatusOptions } from './PersonalInfoForm';
 
 const formSchema = z.object({
   idNumber: z.string()
@@ -35,6 +21,7 @@ const formSchema = z.object({
     required_error: "יש לבחור תאריך לידה",
   }),
   gender: z.string({ required_error: "יש לבחור מין" }),
+  maritalStatus: z.string({ required_error: "יש לבחור מצב משפחתי" }),
   birthCountry: z.string().min(2, { message: "יש לבחור ארץ לידה" }),
   immigrationYear: z.string().optional()
     .refine(val => !val || (Number(val) >= 1948 && Number(val) <= currentYear), {
@@ -69,6 +56,7 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
       fatherName: '',
       birthDate: undefined,
       gender: '',
+      maritalStatus: maritalStatusOptions[0].value,
       birthCountry: 'ישראל',
       immigrationYear: '',
       address: '',
@@ -130,7 +118,8 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
             <PersonalInfoForm
               control={form.control}
               isLoading={isLoading}
-              formPrefix="spouse"
+              formPrefix=""
+              includeMaritalStatus={true}
               generateAutoSignature={generateAutoSignature}
               watchBirthCountry={watchBirthCountry}
               setShowImmigrationYear={setShowImmigrationYear}

@@ -27,6 +27,21 @@ export const maritalStatusOptions = [
 
 export const currentYear = new Date().getFullYear();
 
+// Export the ID validation function for reuse
+export const isValidIsraeliID = (id: string) => {
+  const cleanId = String(id).trim();
+  if (cleanId.length > 9 || cleanId.length < 5 || isNaN(Number(cleanId))) return false;
+
+  const paddedId = cleanId.length < 9 ? ("00000000" + cleanId).slice(-9) : cleanId;
+
+  return Array
+    .from(paddedId, Number)
+    .reduce((counter, digit, i) => {
+      const step = digit * ((i % 2) + 1);
+      return counter + (step > 9 ? step - 9 : step);
+    }, 0) % 10 === 0;
+};
+
 interface PersonalInfoFormProps {
   control: Control<any>;
   isLoading?: boolean;
