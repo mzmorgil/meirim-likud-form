@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TextField } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { heIL } from '@mui/material/locale';
 import dayjs from 'dayjs';
@@ -13,27 +11,6 @@ import { toJewishDate, toHebrewJewishDate } from 'jewish-date';
 // Create theme with Hebrew locale
 const theme = createTheme(
   {
-    typography: {
-      fontFamily: 'inherit',
-    },
-    components: {
-      MuiFormHelperText: {
-        styleOverrides: {
-          root: {
-            marginTop: 4,
-            fontSize: '0.75rem',
-          },
-        },
-      },
-      MuiInputBase: {
-        styleOverrides: {
-          input: {
-            // Improve immediate feedback on input
-            transition: 'none',
-          },
-        },
-      },
-    },
     direction: 'rtl',
   },
   heIL
@@ -107,22 +84,12 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
                   '& .MuiInputBase-input': { 
                     textAlign: 'right',
                   },
-                  // Improve immediate feedback by using a monospace font
-                  '& input': {
-                    fontFamily: 'monospace',
-                  },
-                  // Remove animation delay that might be causing the issue
-                  '& .MuiInputBase-root': {
-                    transition: 'none !important',
-                  }
                 }
               },
               actionBar: {
                 actions: ['clear'],
               },
             }}
-            // Reduce any debounce or delay in input processing
-            reduceAnimations={true}
           />
           
           {hebrewDateText && (
