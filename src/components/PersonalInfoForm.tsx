@@ -471,49 +471,49 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               </div>
             </FormControl>
             <FormMessage />
+
+            <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>הוסף חתימה</DialogTitle>
+                  <DialogDescription>
+                    חתום באמצעות העכבר או באצבע במכשיר מגע
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="border rounded-md bg-white p-1 h-[200px]">
+                  <SignatureCanvas
+                    ref={signatureRef}
+                    canvasProps={{
+                      width: 500,
+                      height: 198,
+                      className: 'w-full h-full signature-canvas'
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <Button
+                    type="button" 
+                    variant="outline"
+                    onClick={clearSignature}
+                  >
+                    נקה
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const dataUrl = saveSignature();
+                      field.onChange(dataUrl);
+                      setShowSignaturePad(false);
+                    }}
+                  >
+                    שמור חתימה
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </FormItem>
         )}
       />
-
-      <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>הוסף חתימה</DialogTitle>
-            <DialogDescription>
-              חתום באמצעות העכבר או באצבע במכשיר מגע
-            </DialogDescription>
-          </DialogHeader>
-          <div className="border rounded-md bg-white p-1 h-[200px]">
-            <SignatureCanvas
-              ref={signatureRef}
-              canvasProps={{
-                width: 500,
-                height: 198,
-                className: 'w-full h-full signature-canvas'
-              }}
-            />
-          </div>
-          <div className="flex justify-between">
-            <Button
-              type="button" 
-              variant="outline"
-              onClick={clearSignature}
-            >
-              נקה
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                const dataUrl = saveSignature();
-                field.onChange(dataUrl);
-                setShowSignaturePad(false);
-              }}
-            >
-              שמור חתימה
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
