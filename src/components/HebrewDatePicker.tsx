@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -12,6 +13,18 @@ import { toJewishDate, toHebrewJewishDate } from 'jewish-date';
 const theme = createTheme(
   {
     direction: 'rtl',
+    components: {
+      MuiOutlinedInput: {
+        styleOverrides: {
+          input: {
+            '&::placeholder': {
+              opacity: 1,
+              color: 'rgba(0, 0, 0, 0.6)',
+            },
+          },
+        },
+      },
+    },
   },
   heIL
 );
@@ -60,7 +73,7 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
 
   // Hebrew date text to display
   const hebrewDateText = value ? getHebrewDateText(value) : '';
-  
+
   return (
     <ThemeProvider theme={theme}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
@@ -70,25 +83,39 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
             onChange={handleDateChange}
             disabled={disabled}
             format="DD/MM/YYYY"
-            openTo="year"
             views={['year', 'month', 'day']}
             slotProps={{
               textField: {
                 placeholder: 'הכנס תאריך',
                 error: error,
-                InputLabelProps: { 
-                  shrink: true,
+                InputProps: {
+                  sx: {
+                    '& input': {
+                      direction: 'ltr', // Fix for RTL input issues
+                      textAlign: 'right',
+                    }
+                  }
                 },
                 sx: { 
                   direction: 'rtl',
-                  '& .MuiInputBase-input': { 
-                    textAlign: 'right',
-                  },
                 }
               },
               actionBar: {
                 actions: ['clear'],
               },
+              // Force immediate update of the input field
+              field: {
+                unstableFieldRef: (element: any) => {
+                  if (element) {
+                    const inputElement = element.querySelector('input');
+                    if (inputElement) {
+                      // Remove any existing input event listeners
+                      const newInputElement = inputElement.cloneNode(true);
+                      inputElement.parentNode.replaceChild(newInputElement, inputElement);
+                    }
+                  }
+                },
+              }
             }}
           />
           
