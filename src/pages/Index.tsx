@@ -94,7 +94,7 @@ const Index = () => {
             <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
           )}
           
-          {currentScreen === 'preview' && formData && pdfUrl && (
+          {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
             <PDFPreview 
               pdfUrl={pdfUrl}
               pdfBlob={pdfBlob}
