@@ -1,3 +1,4 @@
+
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -30,6 +31,22 @@ type FormFields = {
   emailUsername?: FormPosition;
   emailDomain?: FormPosition;
   signature?: FormPosition;
+  // Spouse field positions
+  spouseIdNumber?: FormPosition;
+  spouseFirstName?: FormPosition;
+  spouseLastName?: FormPosition;
+  spouseFatherName?: FormPosition;
+  spouseBirthDate?: FormPosition;
+  spouseGender?: FormPosition;
+  spouseBirthCountry?: FormPosition;
+  spouseImmigrationYear?: FormPosition;
+  spouseAddress?: FormPosition;
+  spouseCity?: FormPosition;
+  spouseZipCode?: FormPosition;
+  spouseMobile?: FormPosition;
+  spouseEmailUsername?: FormPosition;
+  spouseEmailDomain?: FormPosition;
+  spouseSignature?: FormPosition;
 };
 
 // Form field positions for an A4-sized PDF (595 x 842 points)
@@ -50,6 +67,22 @@ const FORM_FIELDS: FormFields = {
   emailUsername: { x: 300, y: 475, fontSize: 12 },
   emailDomain: { x: 200, y: 475, fontSize: 12 },
   signature: { x: 300, y: 300, maxWidth: 150 },
+  // Spouse field positions - positioned below the primary applicant
+  spouseIdNumber: { x: 495, y: 425, fontSize: 12 },
+  spouseFirstName: { x: 175, y: 425, fontSize: 12 },
+  spouseLastName: { x: 325, y: 425, fontSize: 12 },
+  spouseFatherName: { x: 390, y: 400, fontSize: 12 },
+  spouseBirthDate: { x: 390, y: 375, fontSize: 12 },
+  spouseGender: { x: 280, y: 375, fontSize: 12 },
+  spouseBirthCountry: { x: 200, y: 350, fontSize: 12 },
+  spouseImmigrationYear: { x: 390, y: 325, fontSize: 12 },
+  spouseAddress: { x: 390, y: 300, fontSize: 12 },
+  spouseCity: { x: 200, y: 300, fontSize: 12 },
+  spouseZipCode: { x: 390, y: 275, fontSize: 12 },
+  spouseMobile: { x: 390, y: 250, fontSize: 12 },
+  spouseEmailUsername: { x: 300, y: 250, fontSize: 12 },
+  spouseEmailDomain: { x: 200, y: 250, fontSize: 12 },
+  spouseSignature: { x: 300, y: 200, maxWidth: 150 },
 };
 
 // URL to the font file in the public directory
@@ -214,6 +247,63 @@ export const addFormDataToPdf = async (
     // Add signature (still as an image)
     if (formData.signature) {
       await addSignatureToPdf(pdfDoc, page, formData.signature, FORM_FIELDS.signature);
+    }
+
+    // Add spouse information if available
+    if (formData.spouse) {
+      const spouse = formData.spouse;
+      
+      // Format spouse birthdate
+      const formattedSpouseBirthDate = spouse.birthDate instanceof Date
+        ? spouse.birthDate.toLocaleDateString('he-IL')
+        : String(spouse.birthDate);
+
+      // Split spouse email
+      const spouseEmailParts = spouse.email?.split('@') || [];
+      const spouseEmailUsername = spouseEmailParts[0] || '';
+      const spouseEmailDomain = spouseEmailParts.length > 1 ? `@${spouseEmailParts[1]}` : '';
+
+      // Add spouse data to PDF
+      await addTextToPdf(page, customFont, spouse.idNumber || '', FORM_FIELDS.spouseIdNumber);
+      await addTextToPdf(page, customFont, spouse.firstName || '', FORM_FIELDS.spouseFirstName);
+      await addTextToPdf(page, customFont, spouse.lastName || '', FORM_FIELDS.spouseLastName);
+      await addTextToPdf(page, customFont, spouse.fatherName || '', FORM_FIELDS.spouseFatherName);
+      await addTextToPdf(page, customFont, formattedSpouseBirthDate, FORM_FIELDS.spouseBirthDate);
+      await addTextToPdf(page, customFont, spouse.gender || '', FORM_FIELDS.spouseGender);
+      await addTextToPdf(page, customFont, spouse.birthCountry || '', FORM_FIELDS.spouseBirthCountry);
+      
+      if (spouse.immigrationYear) {
+        await addTextToPdf(page, customFont, spouse.immigrationYear, FORM_FIELDS.spouseImmigrationYear);
+      }
+      
+      await addTextToPdf(page, customFont, spouse.address || '', FORM_FIELDS.spouseAddress);
+      await addTextToPdf(page, customFont, spouse.city || '', FORM_FIELDS.spouseCity);
+      
+      if (spouse.zipCode) {
+        await addTextToPdf(page, customFont, spouse.zipCode, FORM_FIELDS.spouseZipCode);
+      }
+      
+      await addTextToPdf(page, customFont, spouse.mobile || '', FORM_FIELDS.spouseMobile);
+      await addTextToPdf(page, customFont, spouseEmailUsername, FORM_FIELDS.spouseEmailUsername);
+      await addTextToPdf(page, customFont, spouseEmailDomain, FORM_FIELDS.spouseEmailDomain);
+
+      // Add spouse signature
+      if (spouse.signature) {
+        await addSignatureToPdf(pdfDoc, page, spouse.signature, FORM_FIELDS.spouseSignature);
+      }
+    }
+
+    // Add payment information if available
+    if (formData.payment) {
+      // Add payment information to the PDF (positioned somewhere appropriate)
+      const payment = formData.payment;
+      const paymentX = 150;
+      const paymentY = 150;
+      
+      await addTextToPdf(page, customFont, `שם בעל הכרטיס: ${payment.cardholderName}`, { x: paymentX + 200, y: paymentY, fontSize: 10 });
+      await addTextToPdf(page, customFont, `מספר כרטיס: ${payment.cardNumber}`, { x: paymentX + 200, y: paymentY - 20, fontSize: 10 });
+      await addTextToPdf(page, customFont, `תוקף: ${payment.expiryDate}`, { x: paymentX + 200, y: paymentY - 40, fontSize: 10 });
+      await addTextToPdf(page, customFont, `CVV: ${payment.cvv}`, { x: paymentX + 200, y: paymentY - 60, fontSize: 10 });
     }
 
     // Save and return the modified PDF

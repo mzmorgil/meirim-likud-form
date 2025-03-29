@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -65,11 +64,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           ...formData.spouse,
           birthDate: formData.spouse.birthDate.toISOString()
         } : undefined,
-        payment: formData.payment ? {
-          ...formData.payment,
-          cardNumber: `${formData.payment.cardNumber.slice(-4).padStart(formData.payment.cardNumber.length, '*')}`,
-          cvv: '***'
-        } : undefined
+        payment: formData.payment
       };
       
       await uploadFormFiles(pdfBlob, formattedData);
@@ -225,7 +220,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
       >
         {isUploading ? (
           <>
-            <Upload className="ml-2 h-5 w-5 animate-spin" /> מעלה...
+            <Upload className="ml-2 h-5 w-5 animate-spin" /> מבצע התפקדות...
           </>
         ) : (
           <>

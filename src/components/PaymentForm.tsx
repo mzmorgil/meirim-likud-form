@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,19 +8,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, RefreshCw, CreditCard, User, CalendarDays, Lock, Eye } from 'lucide-react';
 
-// Credit card validation functions
 const validateCreditCardNumber = (number: string): boolean => {
-  // Remove spaces and dashes
   const digitsOnly = number.replace(/[\s-]/g, '');
   
-  // Check if contains only digits and length is valid (13-19 digits)
   if (!/^\d{13,19}$/.test(digitsOnly)) return false;
   
-  // Luhn algorithm implementation
   let sum = 0;
   let shouldDouble = false;
   
-  // Loop from right to left
   for (let i = digitsOnly.length - 1; i >= 0; i--) {
     let digit = parseInt(digitsOnly.charAt(i));
     
@@ -38,20 +32,16 @@ const validateCreditCardNumber = (number: string): boolean => {
 };
 
 const validateExpiryDate = (date: string): boolean => {
-  // Format should be MM/YY
   if (!/^\d{2}\/\d{2}$/.test(date)) return false;
   
   const [month, year] = date.split('/').map(num => parseInt(num, 10));
   
-  // Check if month is between 1-12
   if (month < 1 || month > 12) return false;
   
-  // Get current date
   const now = new Date();
-  const currentYear = now.getFullYear() % 100; // Get last two digits of year
-  const currentMonth = now.getMonth() + 1; // January is 0
+  const currentYear = now.getFullYear() % 100;
+  const currentMonth = now.getMonth() + 1;
   
-  // Check if card is not expired
   if (year < currentYear || (year === currentYear && month < currentMonth)) {
     return false;
   }
@@ -96,7 +86,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
     },
   });
 
-  // Format credit card number with spaces every 4 digits
   const formatCreditCardNumber = (value: string) => {
     const digitsOnly = value.replace(/\D/g, '');
     const groups = [];
@@ -108,7 +97,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
     return groups.join(' ');
   };
 
-  // Format expiry date as MM/YY
   const formatExpiryDate = (value: string) => {
     const digitsOnly = value.replace(/\D/g, '');
     
@@ -130,7 +118,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
   };
 
   const handleSubmit = (values: FormValues) => {
-    // Clean up card number before submitting (remove spaces)
     const cleanedValues = {
       ...values,
       cardNumber: values.cardNumber.replace(/\s/g, ''),
@@ -139,12 +126,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
     onSubmit(cleanedValues);
   };
 
-  // Calculate payment amount based on whether spouse is included
   const getPaymentAmount = () => {
     return includeSpouse ? '96 ₪' : '64 ₪';
   };
 
-  // Get payment description
   const getPaymentDescription = () => {
     return includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
   };
@@ -303,7 +288,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
               ) : (
                 <>
                   <Eye className="ml-2 h-4 w-4" />
-                  הכן מסמך התפקדות
+                  הצג טופס התפקדות
                 </>
               )}
             </Button>
