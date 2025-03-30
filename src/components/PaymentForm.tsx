@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +54,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 }) => {
   const { primaryUserData, spouseData } = useFormContext();
   
-  // Make sure we have a default cardholder name from the primary user
   const defaultCardholderName = primaryUserData 
     ? `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim() 
     : '';
@@ -75,12 +73,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     let value = e.target.value.replace(/\D/g, '');
     
     if (value.length > 0) {
-      // Format as MM/YY
       if (value.length > 2) {
         value = value.slice(0, 2) + '/' + value.slice(2, 4);
       }
       
-      // Validate month (01-12)
       const month = parseInt(value.substring(0, 2), 10);
       if (month > 12) {
         value = '12' + value.substring(2);
@@ -96,7 +92,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     let value = e.target.value.replace(/\D/g, '');
     let formattedValue = '';
     
-    // Group in chunks of 4
     for (let i = 0; i < value.length; i += 4) {
       formattedValue += value.slice(i, i + 4) + ' ';
     }
@@ -279,10 +274,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               />
             </div>
             
-            <div className="flex items-center justify-center text-sm text-muted-foreground">
-              <CreditCard className="ml-2 h-4 w-4" />
-              <span>העסקה מאובטחת ולא נשמרת במערכת</span>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              פרטי האשראי מאובטחים ומוצפנים. הסכום שיחויב הוא {getPaymentAmount()} {getPaymentDescription()}.
+            </p>
           </CardContent>
           <CardFooter className="flex justify-between pb-6">
             <Button 
