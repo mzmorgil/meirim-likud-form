@@ -135,7 +135,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           name="cardholderType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>שם בעל/ת הכרטיס</FormLabel>
+              <FormLabel dir="rtl">שם בעל/ת הכרטיס</FormLabel>
               <Select
                 onValueChange={(value) => {
                   field.onChange(value);
@@ -150,11 +150,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 disabled={isLoading}
               >
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger dir="rtl">
                     <SelectValue placeholder="בחר שם בעל/ת הכרטיס" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent dir="rtl">
                   {primaryUserData && (
                     <SelectItem value="primary">
                       {primaryUserData.firstName} {primaryUserData.lastName}
@@ -175,8 +175,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     } else {
       return (
         <FormItem>
-          <FormLabel>שם בעל/ת הכרטיס</FormLabel>
-          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-right text-base md:text-sm">
+          <FormLabel dir="rtl">שם בעל/ת הכרטיס</FormLabel>
+          <div 
+            className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-right text-base md:text-sm" 
+            dir="rtl"
+          >
             {defaultCardholderName}
           </div>
         </FormItem>
