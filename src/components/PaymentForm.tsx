@@ -127,6 +127,63 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     return includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
   };
 
+  const renderCardholderField = () => {
+    if (includeSpouse && spouseData) {
+      return (
+        <FormField
+          control={form.control}
+          name="cardholderType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>שם בעל/ת הכרטיס</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  
+                  if (value === 'primary' && primaryUserData) {
+                    form.setValue('cardholderName', `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim());
+                  } else if (value === 'spouse' && spouseData) {
+                    form.setValue('cardholderName', `${spouseData.firstName} ${spouseData.lastName}`.trim());
+                  }
+                }}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="בחר שם בעל/ת הכרטיס" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {primaryUserData && (
+                    <SelectItem value="primary">
+                      {primaryUserData.firstName} {primaryUserData.lastName}
+                    </SelectItem>
+                  )}
+                  {spouseData && (
+                    <SelectItem value="spouse">
+                      {spouseData.firstName} {spouseData.lastName}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    } else {
+      return (
+        <FormItem>
+          <FormLabel>שם בעל/ת הכרטיס</FormLabel>
+          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-right text-base md:text-sm">
+            {defaultCardholderName}
+          </div>
+        </FormItem>
+      );
+    }
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
@@ -140,71 +197,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               <p className="text-xs text-muted-foreground">{getPaymentDescription()}</p>
             </div>
             
-            {includeSpouse && spouseData ? (
-              <>
-                <FormField
-                  control={form.control}
-                  name="cardholderType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>בחר שם בעל/ת הכרטיס</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isLoading}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר שם בעל/ת הכרטיס" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {primaryUserData && (
-                            <SelectItem value="primary">
-                              {primaryUserData.firstName} {primaryUserData.lastName}
-                            </SelectItem>
-                          )}
-                          {spouseData && (
-                            <SelectItem value="spouse">
-                              {spouseData.firstName} {spouseData.lastName}
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="cardholderName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>שם בעל/ת הכרטיס</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled={true} className="bg-gray-100" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            ) : (
-              <FormField
-                control={form.control}
-                name="cardholderName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>שם בעל/ת הכרטיס</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={true} className="bg-gray-100" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            {renderCardholderField()}
             
             <FormField
               control={form.control}
