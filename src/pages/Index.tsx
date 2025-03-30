@@ -8,6 +8,7 @@ import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
 import { FormProvider } from '@/hooks/use-form-context';
+import { PaymentFormValues } from '@/components/PaymentForm';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
@@ -73,7 +74,19 @@ const Index = () => {
     setCurrentScreen('paymentForm');
   };
 
-  const handlePaymentSubmit = async (data: PaymentData) => {
+  const handlePaymentSubmit = (data: PaymentFormValues) => {
+    const paymentInfo: PaymentData = {
+      cardholderName: data.cardholderName,
+      cardholderType: data.cardholderType,
+      cardNumber: data.cardNumber,
+      expiryDate: data.expiryDate,
+      cvv: data.cvv
+    };
+    
+    processPayment(paymentInfo);
+  };
+
+  const processPayment = async (data: PaymentData) => {
     setPaymentData(data);
     setIsProcessing(true);
     

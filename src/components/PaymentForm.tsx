@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,7 +44,6 @@ interface PaymentFormProps {
   onBack: () => void;
   isLoading?: boolean;
   includeSpouse?: boolean;
-  defaultCardholderName?: string;
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ 
@@ -100,7 +98,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     form.setValue('cardNumber', formattedValue.trim());
   };
 
-  // Update cardholder name when type changes
   useEffect(() => {
     const cardholderType = form.watch('cardholderType');
     
