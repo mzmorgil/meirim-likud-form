@@ -1,4 +1,3 @@
-
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -12,6 +11,7 @@ type FormPosition = {
   y: number;
   fontSize?: number;
   maxWidth?: number;
+  rtl?: boolean; // Add rtl flag for directional text
 };
 
 type FormFields = {
@@ -138,6 +138,66 @@ const addDebugGrid = (
       color: rgb(0.5, 0.5, 0.8), // Blue-gray
     });
   }
+};
+
+/**
+ * Adds text to the PDF page using the embedded font, with RTL support for Hebrew
+ */
+const addTextToPdf = async (
+  page: any,
+  font: any,
+  text: string,
+  position?: FormPosition
+): Promise<void> => {
+  if (!position || !text) return;
+
+  const fontSize = position.fontSize || 12;
+  const isRTL = position.rtl !== false; // Default to RTL (true) unless explicitly set to false
+  const textWidth = font.widthOfTextAtSize(text, fontSize);
+
+  // Adjust x-position based on text direction
+  const x = isRTL ? position.x - textWidth : position.x;
+
+  page.drawText(text, {
+    x,
+    y: position.y,
+    size: fontSize,
+    font,
+    color: rgb(0, 0, 0), // Black text
+  });
+};
+
+/**
+ * Adds a signature image to the PDF
+ */
+const addSignatureToPdf = async (
+  pdfDoc: PDFDocument,
+  page: any,
+  signatureDataUrl: string,
+  position?: FormPosition
+): Promise<void> => {
+  if (!position || !signatureDataUrl) return;
+
+  const base64Data = signatureDataUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
+  let embeddedImage;
+
+  if (signatureDataUrl.includes('image/png')) {
+    embeddedImage = await pdfDoc.embedPng(base64Data);
+  } else if (signatureDataUrl.includes('image/jpeg') || signatureDataUrl.includes('image/jpg')) {
+    embeddedImage = await pdfDoc.embedJpg(base64Data);
+  } else {
+    throw new Error('Unsupported signature image format');
+  }
+
+  const width = position.maxWidth || 150;
+  const height = (width / embeddedImage.width) * embeddedImage.height;
+
+  page.drawImage(embeddedImage, {
+    x: position.x,
+    y: position.y,
+    width,
+    height,
+  });
 };
 
 /**
@@ -295,15 +355,22 @@ export const addFormDataToPdf = async (
 
     // Add payment information if available
     if (formData.payment) {
-      // Add payment information to the PDF (positioned somewhere appropriate)
+      // Add payment information to the PDF with LTR flag for card data
       const payment = formData.payment;
       const paymentX = 150;
       const paymentY = 150;
       
-      await addTextToPdf(page, customFont, `שם בעל הכרטיס: ${payment.cardholderName}`, { x: paymentX + 200, y: paymentY, fontSize: 10 });
-      await addTextToPdf(page, customFont, `מספר כרטיס: ${payment.cardNumber}`, { x: paymentX + 200, y: paymentY - 20, fontSize: 10 });
-      await addTextToPdf(page, customFont, `תוקף: ${payment.expiryDate}`, { x: paymentX + 200, y: paymentY - 40, fontSize: 10 });
-      await addTextToPdf(page, customFont, `CVV: ${payment.cvv}`, { x: paymentX + 200, y: paymentY - 60, fontSize: 10 });
+      await addTextToPdf(page, customFont, `שם בעל הכרטיס: `, { x: paymentX + 200, y: paymentY, fontSize: 10 });
+      await addTextToPdf(page, customFont, payment.cardholderName, { x: paymentX + 100, y: paymentY, fontSize: 10, rtl: false });
+      
+      await addTextToPdf(page, customFont, `מספר כרטיס: `, { x: paymentX + 200, y: paymentY - 20, fontSize: 10 });
+      await addTextToPdf(page, customFont, payment.cardNumber, { x: paymentX + 100, y: paymentY - 20, fontSize: 10, rtl: false });
+      
+      await addTextToPdf(page, customFont, `תוקף: `, { x: paymentX + 200, y: paymentY - 40, fontSize: 10 });
+      await addTextToPdf(page, customFont, payment.expiryDate, { x: paymentX + 100, y: paymentY - 40, fontSize: 10, rtl: false });
+      
+      await addTextToPdf(page, customFont, `CVV: `, { x: paymentX + 200, y: paymentY - 60, fontSize: 10 });
+      await addTextToPdf(page, customFont, payment.cvv, { x: paymentX + 100, y: paymentY - 60, fontSize: 10, rtl: false });
     }
 
     // Save and return the modified PDF
@@ -313,65 +380,6 @@ export const addFormDataToPdf = async (
     console.error('Error adding form data to PDF:', error);
     throw error;
   }
-};
-
-/**
- * Adds text to the PDF page using the embedded font, with RTL support for Hebrew
- */
-const addTextToPdf = async (
-  page: any,
-  font: any,
-  text: string,
-  position?: FormPosition
-): Promise<void> => {
-  if (!position || !text) return;
-
-  const fontSize = position.fontSize || 12;
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-
-  // Adjust x-position for RTL (start from the right)
-  const x = position.x - textWidth;
-
-  page.drawText(text, {
-    x,
-    y: position.y,
-    size: fontSize,
-    font,
-    color: rgb(0, 0, 0), // Black text
-  });
-};
-
-/**
- * Adds a signature image to the PDF
- */
-const addSignatureToPdf = async (
-  pdfDoc: PDFDocument,
-  page: any,
-  signatureDataUrl: string,
-  position?: FormPosition
-): Promise<void> => {
-  if (!position || !signatureDataUrl) return;
-
-  const base64Data = signatureDataUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
-  let embeddedImage;
-
-  if (signatureDataUrl.includes('image/png')) {
-    embeddedImage = await pdfDoc.embedPng(base64Data);
-  } else if (signatureDataUrl.includes('image/jpeg') || signatureDataUrl.includes('image/jpg')) {
-    embeddedImage = await pdfDoc.embedJpg(base64Data);
-  } else {
-    throw new Error('Unsupported signature image format');
-  }
-
-  const width = position.maxWidth || 150;
-  const height = (width / embeddedImage.width) * embeddedImage.height;
-
-  page.drawImage(embeddedImage, {
-    x: position.x,
-    y: position.y,
-    width,
-    height,
-  });
 };
 
 /**
