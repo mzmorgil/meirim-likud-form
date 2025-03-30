@@ -7,7 +7,7 @@ import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
-import { FormProvider } from '@/hooks/use-form-context';
+import { FormProvider, useFormContext } from '@/hooks/use-form-context';
 import { PaymentFormValues } from '@/components/PaymentForm';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
@@ -59,8 +59,11 @@ const Index = () => {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  const { setPrimaryUserData, setSpouseData: setFormContextSpouseData } = useFormContext();
+  
   const handleFormSubmit = async (data: FormData) => {
     setFormData(data);
+    setPrimaryUserData(data);
     
     if (data.includeSpouse) {
       setCurrentScreen('spouseForm');
@@ -71,6 +74,7 @@ const Index = () => {
 
   const handleSpouseFormSubmit = (data: SpouseData) => {
     setSpouseData(data);
+    setFormContextSpouseData(data);
     setCurrentScreen('paymentForm');
   };
 
@@ -170,75 +174,79 @@ const Index = () => {
   };
 
   return (
-    <FormProvider>
-      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
-        <div className="max-w-6xl mx-auto">
-          <header className="mb-12 text-center">
-            <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
-              דורית יצחק
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
-              התפקדות לליכוד
-            </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
-              {currentScreen === 'thankYou' && formData 
-                ? `תודה על ההתפקדות, ${formData.firstName}!`
-                : currentScreen === 'preview' && formData
-                  ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData.firstName} ${formData.lastName}` 
-                  : currentScreen === 'spouseForm' && formData
-                    ? `הזנת פרטי בן/בת הזוג של ${formData.firstName} ${formData.lastName}`
-                    : currentScreen === 'paymentForm'
-                      ? "הזנת פרטי תשלום"
-                      : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
-            </p>
-          </header>
-          
-          <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            {currentScreen === 'form' && (
-              <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
-            )}
-            
-            {currentScreen === 'spouseForm' && formData && (
-              <SpouseForm 
-                onSubmit={handleSpouseFormSubmit} 
-                onBack={handleBack}
-                isLoading={isProcessing}
-              />
-            )}
-            
-            {currentScreen === 'paymentForm' && (
-              <PaymentForm 
-                onSubmit={handlePaymentSubmit} 
-                onBack={handleBack}
-                isLoading={isProcessing}
-                includeSpouse={formData?.includeSpouse}
-              />
-            )}
-            
-            {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
-              <PDFPreview 
-                pdfUrl={pdfUrl}
-                pdfBlob={pdfBlob}
-                formData={getPreviewData() as PreviewFormData}
-                onBack={handleBack}
-                onUploadSuccess={handleUploadSuccess}
-              />
-            )}
-            
-            {currentScreen === 'thankYou' && formData && (
-              <ThankYou name={formData.firstName} />
-            )}
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-12 text-center">
+          <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
+            דורית יצחק
           </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
+            התפקדות לליכוד
+          </h1>
+          <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
+            {currentScreen === 'thankYou' && formData 
+              ? `תודה על ההתפקדות, ${formData.firstName}!`
+              : currentScreen === 'preview' && formData
+                ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData.firstName} ${formData.lastName}` 
+                : currentScreen === 'spouseForm' && formData
+                  ? `הזנת פרטי בן/בת הזוג של ${formData.firstName} ${formData.lastName}`
+                  : currentScreen === 'paymentForm'
+                    ? "הזנת פרטי תשלום"
+                    : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
+          </p>
+        </header>
+        
+        <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
+          {currentScreen === 'form' && (
+            <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
+          )}
           
-          <footer className="mt-16 text-center text-sm text-muted-foreground">
-            <p className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
-              כל הזכויות שמורות &copy; דורית יצחק
-            </p>
-          </footer>
+          {currentScreen === 'spouseForm' && formData && (
+            <SpouseForm 
+              onSubmit={handleSpouseFormSubmit} 
+              onBack={handleBack}
+              isLoading={isProcessing}
+            />
+          )}
+          
+          {currentScreen === 'paymentForm' && (
+            <PaymentForm 
+              onSubmit={handlePaymentSubmit} 
+              onBack={handleBack}
+              isLoading={isProcessing}
+              includeSpouse={formData?.includeSpouse}
+            />
+          )}
+          
+          {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
+            <PDFPreview 
+              pdfUrl={pdfUrl}
+              pdfBlob={pdfBlob}
+              formData={getPreviewData() as PreviewFormData}
+              onBack={handleBack}
+              onUploadSuccess={handleUploadSuccess}
+            />
+          )}
+          
+          {currentScreen === 'thankYou' && formData && (
+            <ThankYou name={formData.firstName} />
+          )}
         </div>
+        
+        <footer className="mt-16 text-center text-sm text-muted-foreground">
+          <p className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
+            כל הזכויות שמורות &copy; דורית יצחק
+          </p>
+        </footer>
       </div>
-    </FormProvider>
+    </div>
   );
 };
 
-export default Index;
+const IndexWithFormProvider = () => (
+  <FormProvider>
+    <Index />
+  </FormProvider>
+);
+
+export default IndexWithFormProvider;

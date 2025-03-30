@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,10 +55,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 }) => {
   const { primaryUserData, spouseData } = useFormContext();
   
+  // Make sure we have a default cardholder name from the primary user
+  const defaultCardholderName = primaryUserData 
+    ? `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim() 
+    : '';
+    
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      cardholderName: primaryUserData ? `${primaryUserData.firstName} ${primaryUserData.lastName}` : '',
+      cardholderName: defaultCardholderName,
       cardholderType: 'primary',
       cardNumber: '',
       expiryDate: '',
@@ -102,9 +108,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     const cardholderType = form.watch('cardholderType');
     
     if (cardholderType === 'primary' && primaryUserData) {
-      form.setValue('cardholderName', `${primaryUserData.firstName} ${primaryUserData.lastName}`);
+      const primaryName = `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim();
+      form.setValue('cardholderName', primaryName);
     } else if (cardholderType === 'spouse' && spouseData) {
-      form.setValue('cardholderName', `${spouseData.firstName} ${spouseData.lastName}`);
+      const spouseName = `${spouseData.firstName} ${spouseData.lastName}`.trim();
+      form.setValue('cardholderName', spouseName);
     }
   }, [form.watch('cardholderType'), primaryUserData, spouseData, form]);
 
