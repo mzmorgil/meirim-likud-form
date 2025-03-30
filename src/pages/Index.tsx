@@ -19,6 +19,7 @@ interface PaymentData {
   cardholderName: string;
   expiryDate: string;
   cvv: string;
+  paymentSignature?: string; // Add field for payment signature
 }
 
 // Define a type for the combined data used in PDF generation
@@ -83,12 +84,33 @@ const Index = () => {
         throw new Error('Missing form data');
       }
       
-      // Create the combined data for the PDF
+      // Determine which signature to use for payment based on the cardholder name
+      let paymentSignature = formData.signature;
+      
+      // If the cardholder name matches the spouse's name more closely than the primary's name
+      if (spouseData && data.cardholderName) {
+        const primaryFullName = `${formData.firstName} ${formData.lastName}`.toLowerCase();
+        const spouseFullName = `${spouseData.firstName} ${spouseData.lastName}`.toLowerCase();
+        const cardholderLower = data.cardholderName.toLowerCase();
+        
+        // Simple string similarity check - if cardholder name is closer to spouse's name
+        if (
+          cardholderLower.includes(spouseData.firstName.toLowerCase()) || 
+          cardholderLower.includes(spouseData.lastName.toLowerCase())
+        ) {
+          paymentSignature = spouseData.signature;
+        }
+      }
+      
+      // Create the combined data for the PDF with the appropriate signature
       const pdfData = {
         ...formData,
         spouse: spouseData || undefined,
-        payment: data
-      } as PDFFormData; // Use type assertion here
+        payment: {
+          ...data,
+          paymentSignature: paymentSignature
+        }
+      } as PDFFormData;
       
       const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, pdfData);
       setPdfBlob(modifiedPdfBlob);

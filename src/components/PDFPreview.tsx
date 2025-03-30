@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +32,7 @@ interface PDFPreviewProps {
       cardholderName: string;
       expiryDate: string;
       cvv: string;
+      paymentSignature?: string; // Add signature field to payment
     };
   };
   onBack: () => void;
@@ -94,14 +94,11 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   };
 
   const formatCreditCard = (number: string) => {
-    // Remove any non-digit characters
     const digitsOnly = number.replace(/\D/g, '');
     
-    // Format into groups of 4
     const groups = [];
     for (let i = 0; i < digitsOnly.length; i += 4) {
       const group = digitsOnly.slice(i, i + 4);
-      // Only show the last group, mask all others
       if (i >= digitsOnly.length - 4) {
         groups.push(group);
       } else {
@@ -121,11 +118,27 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   };
 
   const formatBirthDate = (date: Date) => {
-    // Format with 2-digit year for display in the preview
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear().toString().slice(-2);
     return `${day}/${month}/${year}`;
+  };
+
+  const getSignatureOwner = () => {
+    if (!formData.payment?.cardholderName) return '';
+    
+    const paymentName = formData.payment.cardholderName.toLowerCase();
+    const primaryName = `${formData.firstName} ${formData.lastName}`.toLowerCase();
+    
+    if (formData.spouse) {
+      const spouseName = `${formData.spouse.firstName} ${formData.spouse.lastName}`.toLowerCase();
+      if (paymentName.includes(formData.spouse.firstName.toLowerCase()) || 
+          paymentName.includes(formData.spouse.lastName.toLowerCase())) {
+        return `(${formData.spouse.firstName})`;
+      }
+    }
+    
+    return `(${formData.firstName})`;
   };
 
   return (
@@ -221,6 +234,15 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               <li><span className="font-semibold">תוקף:</span> {formData.payment.expiryDate}</li>
               <li><span className="font-semibold">סכום לתשלום:</span> {getPaymentAmount()} ({getPaymentDescription()})</li>
             </ul>
+            
+            {formData.payment.paymentSignature && (
+              <div className="mt-3">
+                <h3 className="text-sm font-semibold mb-1">חתימה: {getSignatureOwner()}</h3>
+                <div className="flex justify-center">
+                  <img src={formData.payment.paymentSignature} alt="חתימת בעל הכרטיס" className="max-h-[60px] mix-blend-multiply" />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
