@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -8,6 +7,8 @@ import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
+import { FormProvider, useFormContext } from '@/hooks/use-form-context';
+import { PaymentFormValues } from '@/components/PaymentForm';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
@@ -17,11 +18,12 @@ type SpouseData = PersonFormValues;
 interface PaymentData {
   cardNumber: string;
   cardholderName: string;
+  cardholderType?: string;
   expiryDate: string;
   cvv: string;
+  paymentSignature?: string;
 }
 
-// Define a type for the combined data used in PDF generation
 interface PDFFormData {
   idNumber: string;
   firstName: string;
@@ -38,13 +40,11 @@ interface PDFFormData {
   mobile: string;
   email: string;
   signature: string;
-  // Additional fields for the PDF that aren't in the base type
   spouse?: Partial<PersonFormValues>;
   payment?: PaymentData;
   includeSpouse?: boolean;
 }
 
-// Type for the preview component props to ensure compatibility
 interface PreviewFormData extends Omit<PDFFormData, 'spouse'> {
   spouse?: PersonFormValues;
   payment?: PaymentData;
@@ -59,8 +59,11 @@ const Index = () => {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  const { setPrimaryUserData, setSpouseData: setFormContextSpouseData } = useFormContext();
+  
   const handleFormSubmit = async (data: FormData) => {
     setFormData(data);
+    setPrimaryUserData(data);
     
     if (data.includeSpouse) {
       setCurrentScreen('spouseForm');
@@ -71,10 +74,23 @@ const Index = () => {
 
   const handleSpouseFormSubmit = (data: SpouseData) => {
     setSpouseData(data);
+    setFormContextSpouseData(data);
     setCurrentScreen('paymentForm');
   };
 
-  const handlePaymentSubmit = async (data: PaymentData) => {
+  const handlePaymentSubmit = (data: PaymentFormValues) => {
+    const paymentInfo: PaymentData = {
+      cardholderName: data.cardholderName,
+      cardholderType: data.cardholderType,
+      cardNumber: data.cardNumber,
+      expiryDate: data.expiryDate,
+      cvv: data.cvv
+    };
+    
+    processPayment(paymentInfo);
+  };
+
+  const processPayment = async (data: PaymentData) => {
     setPaymentData(data);
     setIsProcessing(true);
     
@@ -83,12 +99,20 @@ const Index = () => {
         throw new Error('Missing form data');
       }
       
-      // Create the combined data for the PDF
+      let paymentSignature = formData.signature;
+      
+      if (formData.includeSpouse && spouseData && data.cardholderType === 'spouse') {
+        paymentSignature = spouseData.signature;
+      }
+      
       const pdfData = {
         ...formData,
         spouse: spouseData || undefined,
-        payment: data
-      } as PDFFormData; // Use type assertion here
+        payment: {
+          ...data,
+          paymentSignature: paymentSignature
+        }
+      } as PDFFormData;
       
       const modifiedPdfBlob = await addFormDataToPdf(PDF_URL, pdfData);
       setPdfBlob(modifiedPdfBlob);
@@ -124,11 +148,9 @@ const Index = () => {
     };
   }, [pdfUrl]);
 
-  // Prepare preview data
   const getPreviewData = (): PreviewFormData | null => {
     if (!formData) return null;
     
-    // Make sure we're returning a complete PreviewFormData object with all required fields
     return {
       idNumber: formData.idNumber,
       firstName: formData.firstName,
@@ -221,4 +243,10 @@ const Index = () => {
   );
 };
 
-export default Index;
+const IndexWithFormProvider = () => (
+  <FormProvider>
+    <Index />
+  </FormProvider>
+);
+
+export default IndexWithFormProvider;

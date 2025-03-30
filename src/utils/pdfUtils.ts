@@ -47,6 +47,11 @@ type FormFields = {
   spouseEmailUsername?: FormPosition;
   spouseEmailDomain?: FormPosition;
   spouseSignature?: FormPosition;
+  paymentCardholderName?: FormPosition;
+  paymentCardNumber?: FormPosition;
+  paymentExpiryDate?: FormPosition;
+  paymentCVV?: FormPosition;
+  paymentSignature?: FormPosition;
 };
 
 // Form field positions for an A4-sized PDF (595 x 842 points)
@@ -83,6 +88,11 @@ const FORM_FIELDS: FormFields = {
   spouseEmailUsername: { x: 300, y: 250, fontSize: 10 },
   spouseEmailDomain: { x: 200, y: 250, fontSize: 10 },
   spouseSignature: { x: 300, y: 200, maxWidth: 150 },
+  paymentCardholderName: { x: 300, y: 150, fontSize: 10 },
+  paymentCardNumber: { x: 300, y: 130, fontSize: 10 },
+  paymentExpiryDate: { x: 300, y: 110, fontSize: 10 },
+  paymentCVV: { x: 300, y: 90, fontSize: 10 },
+  paymentSignature: { x: 300, y: 70, maxWidth: 150 },
 };
 
 // URL to the font file in the public directory
@@ -189,7 +199,8 @@ const addSignatureToPdf = async (
     throw new Error('Unsupported signature image format');
   }
 
-  const width = position.maxWidth || 150;
+  // Scale the signature down to half size
+  const width = (position.maxWidth || 150) * 0.5;
   const height = (width / embeddedImage.width) * embeddedImage.height;
 
   page.drawImage(embeddedImage, {
@@ -197,6 +208,7 @@ const addSignatureToPdf = async (
     y: position.y,
     width,
     height,
+    opacity: 0.8, // Add slight transparency
   });
 };
 
@@ -286,6 +298,7 @@ export const addFormDataToPdf = async (
       cardholderName: string;
       expiryDate: string;
       cvv: string;
+      paymentSignature?: string;
     };
   },
   debug?: boolean
@@ -404,19 +417,19 @@ export const addFormDataToPdf = async (
 
     // Add payment information if available
     if (formData.payment) {
-      // Add payment information to the PDF without labels - just the values
-      const payment = formData.payment;
-      const paymentX = 150;
-      const paymentY = 150;
-      
       // Format the credit card number into groups of 4 digits
-      const formattedCardNumber = formatCreditCardNumber(payment.cardNumber);
+      const formattedCardNumber = formatCreditCardNumber(formData.payment.cardNumber);
       
-      // Add only payment field values without labels
-      await addTextToPdf(page, customFont, payment.cardholderName, { x: paymentX + 100, y: paymentY, fontSize: 10, rtl: false });
-      await addTextToPdf(page, customFont, formattedCardNumber, { x: paymentX + 100, y: paymentY - 20, fontSize: 10, rtl: false });
-      await addTextToPdf(page, customFont, payment.expiryDate, { x: paymentX + 100, y: paymentY - 40, fontSize: 10, rtl: false });
-      await addTextToPdf(page, customFont, payment.cvv, { x: paymentX + 100, y: paymentY - 60, fontSize: 10, rtl: false });
+      // Add payment field values to the PDF
+      await addTextToPdf(page, customFont, formData.payment.cardholderName, FORM_FIELDS.paymentCardholderName);
+      await addTextToPdf(page, customFont, formattedCardNumber, FORM_FIELDS.paymentCardNumber);
+      await addTextToPdf(page, customFont, formData.payment.expiryDate, FORM_FIELDS.paymentExpiryDate);
+      await addTextToPdf(page, customFont, formData.payment.cvv, FORM_FIELDS.paymentCVV);
+      
+      // Add the appropriate signature to the payment section
+      if (formData.payment.paymentSignature) {
+        await addSignatureToPdf(pdfDoc, page, formData.payment.paymentSignature, FORM_FIELDS.paymentSignature);
+      }
     }
 
     // Save and return the modified PDF

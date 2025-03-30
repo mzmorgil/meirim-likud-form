@@ -1,129 +1,122 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, RefreshCw, CreditCard, User, CalendarDays, Lock, Eye } from 'lucide-react';
+import { RefreshCw, CreditCard, ArrowRight } from 'lucide-react';
+import { useFormContext } from '@/hooks/use-form-context';
 
-const validateCreditCardNumber = (number: string): boolean => {
-  const digitsOnly = number.replace(/[\s-]/g, '');
-  
-  if (!/^\d{13,19}$/.test(digitsOnly)) return false;
-  
-  let sum = 0;
-  let shouldDouble = false;
-  
-  for (let i = digitsOnly.length - 1; i >= 0; i--) {
-    let digit = parseInt(digitsOnly.charAt(i));
-    
-    if (shouldDouble) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
-    }
-    
-    sum += digit;
-    shouldDouble = !shouldDouble;
-  }
-  
-  return sum % 10 === 0;
-};
-
-const validateExpiryDate = (date: string): boolean => {
-  if (!/^\d{2}\/\d{2}$/.test(date)) return false;
-  
-  const [month, year] = date.split('/').map(num => parseInt(num, 10));
-  
-  if (month < 1 || month > 12) return false;
-  
-  const now = new Date();
-  const currentYear = now.getFullYear() % 100;
-  const currentMonth = now.getMonth() + 1;
-  
-  if (year < currentYear || (year === currentYear && month < currentMonth)) {
-    return false;
-  }
-  
-  return true;
-};
-
-const formSchema = z.object({
-  cardholderName: z.string().min(2, { message: "שם בעל הכרטיס חייב להכיל לפחות 2 תווים" }),
-  cardNumber: z.string()
-    .min(13, { message: "מספר כרטיס אשראי חייב להכיל לפחות 13 ספרות" })
-    .max(19, { message: "מספר כרטיס אשראי לא יכול להכיל יותר מ-19 ספרות" })
-    .refine(val => validateCreditCardNumber(val), { 
-      message: "מספר כרטיס האשראי אינו תקין" 
-    }),
-  expiryDate: z.string()
-    .regex(/^\d{2}\/\d{2}$/, { message: "פורמט תאריך לא תקין (MM/YY)" })
-    .refine(val => validateExpiryDate(val), { 
-      message: "תאריך תפוגה לא תקין או פג תוקף" 
-    }),
-  cvv: z.string()
-    .regex(/^\d{3,4}$/, { message: "קוד CVV חייב להכיל 3 או 4 ספרות" }),
+const paymentFormSchema = z.object({
+  cardholderName: z.string().min(2, { message: "שם בעל/ת הכרטיס חייב להכיל לפחות 2 תווים" }),
+  cardholderType: z.enum(['primary', 'spouse']).optional(),
+  cardNumber: z
+    .string()
+    .min(13, { message: "מספר כרטיס חייב להכיל לפחות 13 ספרות" })
+    .max(19, { message: "מספר כרטיס לא יכול להכיל יותר מ-19 ספרות" })
+    .refine(val => /^\d+$/.test(val.replace(/\s/g, '')), { message: "מספר כרטיס חייב להכיל ספרות בלבד" }),
+  expiryDate: z
+    .string()
+    .regex(/^(0[1-9]|1[0-2])\/([0-9]{2})$/, { message: "תאריך תפוגה חייב להיות בפורמט MM/YY" })
+    .refine(val => {
+      const [month, year] = val.split('/');
+      const expiryDate = new Date();
+      expiryDate.setFullYear(2000 + parseInt(year, 10));
+      expiryDate.setMonth(parseInt(month, 10) - 1, 1);
+      
+      const today = new Date();
+      return expiryDate > today;
+    }, { message: "כרטיס פג תוקף" }),
+  cvv: z
+    .string()
+    .min(3, { message: "CVV חייב להכיל לפחות 3 ספרות" })
+    .max(4, { message: "CVV לא יכול להכיל יותר מ-4 ספרות" })
+    .refine(val => /^\d+$/.test(val), { message: "CVV חייב להכיל ספרות בלבד" }),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+export type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 interface PaymentFormProps {
-  onSubmit: (data: FormValues) => void;
+  onSubmit: (data: PaymentFormValues) => void;
   onBack: () => void;
   isLoading?: boolean;
   includeSpouse?: boolean;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading = false, includeSpouse = false }) => {
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+const PaymentForm: React.FC<PaymentFormProps> = ({ 
+  onSubmit, 
+  onBack, 
+  isLoading = false,
+  includeSpouse = false
+}) => {
+  const { primaryUserData, spouseData } = useFormContext();
+  
+  const defaultCardholderName = primaryUserData 
+    ? `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim() 
+    : '';
+    
+  const form = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      cardholderName: '',
+      cardholderName: defaultCardholderName,
+      cardholderType: 'primary',
       cardNumber: '',
       expiryDate: '',
       cvv: '',
     },
   });
 
-  const formatCreditCardNumber = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, '');
-    const groups = [];
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
     
-    for (let i = 0; i < digitsOnly.length; i += 4) {
-      groups.push(digitsOnly.slice(i, i + 4));
+    if (value.length > 0) {
+      if (value.length > 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2, 4);
+      }
+      
+      const month = parseInt(value.substring(0, 2), 10);
+      if (month > 12) {
+        value = '12' + value.substring(2);
+      } else if (month === 0) {
+        value = '01' + value.substring(2);
+      }
     }
     
-    return groups.join(' ');
+    form.setValue('expiryDate', value);
   };
 
-  const formatExpiryDate = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, '');
+  const formatCardNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
+    let formattedValue = '';
     
-    if (digitsOnly.length <= 2) {
-      return digitsOnly;
+    for (let i = 0; i < value.length; i += 4) {
+      formattedValue += value.slice(i, i + 4) + ' ';
     }
     
-    return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}`;
+    form.setValue('cardNumber', formattedValue.trim());
   };
 
-  const handleCreditCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formattedValue = formatCreditCardNumber(e.target.value);
-    form.setValue('cardNumber', formattedValue);
-  };
+  useEffect(() => {
+    const cardholderType = form.watch('cardholderType');
+    
+    if (cardholderType === 'primary' && primaryUserData) {
+      const primaryName = `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim();
+      form.setValue('cardholderName', primaryName);
+    } else if (cardholderType === 'spouse' && spouseData) {
+      const spouseName = `${spouseData.firstName} ${spouseData.lastName}`.trim();
+      form.setValue('cardholderName', spouseName);
+    }
+  }, [form.watch('cardholderType'), primaryUserData, spouseData, form]);
 
-  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formattedValue = formatExpiryDate(e.target.value);
-    form.setValue('expiryDate', formattedValue);
-  };
-
-  const handleSubmit = (values: FormValues) => {
-    const cleanedValues = {
+  const handleSubmit = (values: PaymentFormValues) => {
+    const cleanCardNumber = values.cardNumber.replace(/\s/g, '');
+    onSubmit({
       ...values,
-      cardNumber: values.cardNumber.replace(/\s/g, ''),
-    };
-    
-    onSubmit(cleanedValues);
+      cardNumber: cleanCardNumber
+    });
   };
 
   const getPaymentAmount = () => {
@@ -134,135 +127,152 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
     return includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
   };
 
+  const renderCardholderField = () => {
+    if (includeSpouse && spouseData) {
+      return (
+        <FormField
+          control={form.control}
+          name="cardholderType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel dir="rtl">שם בעל/ת הכרטיס</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  
+                  if (value === 'primary' && primaryUserData) {
+                    form.setValue('cardholderName', `${primaryUserData.firstName} ${primaryUserData.lastName}`.trim());
+                  } else if (value === 'spouse' && spouseData) {
+                    form.setValue('cardholderName', `${spouseData.firstName} ${spouseData.lastName}`.trim());
+                  }
+                }}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger dir="rtl">
+                    <SelectValue placeholder="בחר שם בעל/ת הכרטיס" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent dir="rtl">
+                  {primaryUserData && (
+                    <SelectItem value="primary">
+                      {primaryUserData.firstName} {primaryUserData.lastName}
+                    </SelectItem>
+                  )}
+                  {spouseData && (
+                    <SelectItem value="spouse">
+                      {spouseData.firstName} {spouseData.lastName}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    } else {
+      return (
+        <FormItem>
+          <FormLabel dir="rtl">שם בעל/ת הכרטיס</FormLabel>
+          <div 
+            className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-right text-base md:text-sm" 
+            dir="rtl"
+          >
+            {defaultCardholderName}
+          </div>
+        </FormItem>
+      );
+    }
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">פרטי תשלום</CardTitle>
-        <CardDescription className="text-center">יש להזין את פרטי כרטיס האשראי לתשלום דמי ההתפקדות</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4">
+          <CardContent className="space-y-4">
+            <div className="bg-secondary/20 rounded-lg p-3 mb-4 text-center">
+              <p className="text-sm font-medium">סכום לתשלום: {getPaymentAmount()}</p>
+              <p className="text-xs text-muted-foreground">{getPaymentDescription()}</p>
+            </div>
+            
+            {renderCardholderField()}
+            
+            <FormField
+              control={form.control}
+              name="cardNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>מספר כרטיס</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="מספר כרטיס" 
+                      {...field} 
+                      onChange={(e) => {
+                        formatCardNumber(e);
+                        field.onChange(e);
+                      }}
+                      maxLength={19}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="cardholderName"
+                name="expiryDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      שם בעל הכרטיס
-                    </FormLabel>
+                    <FormLabel>תוקף (MM/YY)</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="הכנס שם מלא" 
+                        placeholder="MM/YY" 
                         {...field} 
-                        className="transition-all focus:ring-2 text-right"
+                        onChange={(e) => {
+                          handleExpiryChange(e);
+                          field.onChange(e);
+                        }}
+                        maxLength={5}
                         disabled={isLoading}
-                        dir="rtl"
-                        autoComplete="cc-name"
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
-                name="cardNumber"
+                name="cvv"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      מספר כרטיס אשראי
-                    </FormLabel>
+                    <FormLabel>CVV</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="0000 0000 0000 0000" 
-                        value={field.value}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleCreditCardChange(e);
-                        }}
-                        className="transition-all focus:ring-2 text-left font-mono ltr"
+                        placeholder="CVV" 
+                        {...field} 
+                        maxLength={4}
                         disabled={isLoading}
-                        dir="ltr"
-                        maxLength={19}
-                        inputMode="numeric"
-                        autoComplete="cc-number"
+                        type="password"
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4" />
-                        תוקף
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="MM/YY" 
-                          value={field.value}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            handleExpiryDateChange(e);
-                          }}
-                          className="transition-all focus:ring-2 text-left font-mono ltr"
-                          disabled={isLoading}
-                          dir="ltr"
-                          maxLength={5}
-                          inputMode="numeric"
-                          autoComplete="cc-exp"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="cvv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Lock className="h-4 w-4" />
-                        CVV
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="123" 
-                          {...field} 
-                          className="transition-all focus:ring-2 text-left font-mono ltr"
-                          disabled={isLoading}
-                          dir="ltr"
-                          maxLength={4}
-                          type="password"
-                          inputMode="numeric"
-                          autoComplete="cc-csc"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </div>
-
-            <div className="bg-muted/50 p-3 rounded-md text-sm">
-              <p className="text-muted-foreground">
-                פרטי האשראי מאובטחים ומוצפנים. הסכום שיחויב הוא {getPaymentAmount()} {getPaymentDescription()}.
-              </p>
-            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              פרטי האשראי מאובטחים ומוצפנים. הסכום שיחויב הוא {getPaymentAmount()} {getPaymentDescription()}.
+            </p>
           </CardContent>
           <CardFooter className="flex justify-between pb-6">
             <Button 
@@ -276,9 +286,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
             </Button>
             <Button 
               type="submit" 
-              className="btn-hover-effect"
               disabled={isLoading}
-              size="lg"
             >
               {isLoading ? (
                 <>
@@ -286,10 +294,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit, onBack, isLoading =
                   מעבד...
                 </>
               ) : (
-                <>
-                  <Eye className="ml-2 h-4 w-4" />
-                  הצג טופס התפקדות
-                </>
+                'המשך'
               )}
             </Button>
           </CardFooter>

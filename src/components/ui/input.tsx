@@ -13,7 +13,11 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
                          props.id?.includes('cvv') ||
                          props.id?.includes('expiry');
     
-    const inputDir = dir || (isCardField ? "ltr" : "rtl");
+    const isNameField = props.name === 'cardholderName' || props.id === 'cardholderName';
+    
+    const inputDir = dir || 
+      (isCardField ? "ltr" : 
+       (isNameField ? "rtl" : "rtl"));
     
     return (
       <input
@@ -21,6 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
         className={cn(
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
           isCardField ? "text-left" : "", // Add text-left for card fields
+          isNameField ? "text-right" : "", // Add text-right for name fields
           className
         )}
         ref={ref}
@@ -33,3 +38,4 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 Input.displayName = "Input"
 
 export { Input }
+
