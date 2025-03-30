@@ -1,16 +1,19 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RefreshCw, CreditCard, ArrowRight, ChevronsUpDown } from 'lucide-react';
+import { RefreshCw, CreditCard, ArrowRight } from 'lucide-react';
 import { useFormContext } from '@/hooks/use-form-context';
 
 const paymentFormSchema = z.object({
   cardholderName: z.string().min(2, { message: "שם בעל/ת הכרטיס חייב להכיל לפחות 2 תווים" }),
+  cardholderType: z.enum(['primary', 'spouse']).optional(),
   cardNumber: z
     .string()
     .min(13, { message: "מספר כרטיס חייב להכיל לפחות 13 ספרות" })
@@ -49,13 +52,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   onSubmit, 
   onBack, 
   isLoading = false,
-  includeSpouse = false,
-  defaultCardholderName = '' 
+  includeSpouse = false
 }) => {
+  const { primaryUserData, spouseData } = useFormContext();
+  
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      cardholderName: defaultCardholderName || '',
+      cardholderName: primaryUserData ? `${primaryUserData.firstName} ${primaryUserData.lastName}` : '',
+      cardholderType: 'primary',
       cardNumber: '',
       expiryDate: '',
       cvv: '',
@@ -95,13 +100,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     form.setValue('cardNumber', formattedValue.trim());
   };
 
-  const { primaryUserData, spouseData } = useFormContext();
-
+  // Update cardholder name when type changes
   useEffect(() => {
-    if (!form.getValues('cardholderName') && primaryUserData) {
+    const cardholderType = form.watch('cardholderType');
+    
+    if (cardholderType === 'primary' && primaryUserData) {
       form.setValue('cardholderName', `${primaryUserData.firstName} ${primaryUserData.lastName}`);
+    } else if (cardholderType === 'spouse' && spouseData) {
+      form.setValue('cardholderName', `${spouseData.firstName} ${spouseData.lastName}`);
     }
-  }, [primaryUserData, form]);
+  }, [form.watch('cardholderType'), primaryUserData, spouseData, form]);
 
   const handleSubmit = (values: PaymentFormValues) => {
     const cleanCardNumber = values.cardNumber.replace(/\s/g, '');
@@ -132,19 +140,71 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               <p className="text-xs text-muted-foreground">{getPaymentDescription()}</p>
             </div>
             
-            <FormField
-              control={form.control}
-              name="cardholderName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>שם בעל/ת הכרטיס</FormLabel>
-                  <FormControl>
-                    <Input placeholder="שם מלא" {...field} disabled={isLoading} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {includeSpouse && spouseData ? (
+              <>
+                <FormField
+                  control={form.control}
+                  name="cardholderType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>בחר שם בעל/ת הכרטיס</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר שם בעל/ת הכרטיס" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {primaryUserData && (
+                            <SelectItem value="primary">
+                              {primaryUserData.firstName} {primaryUserData.lastName}
+                            </SelectItem>
+                          )}
+                          {spouseData && (
+                            <SelectItem value="spouse">
+                              {spouseData.firstName} {spouseData.lastName}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="cardholderName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>שם בעל/ת הכרטיס</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled={true} className="bg-gray-100" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
+              <FormField
+                control={form.control}
+                name="cardholderName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>שם בעל/ת הכרטיס</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={true} className="bg-gray-100" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             <FormField
               control={form.control}

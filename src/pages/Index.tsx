@@ -17,6 +17,7 @@ type SpouseData = PersonFormValues;
 interface PaymentData {
   cardNumber: string;
   cardholderName: string;
+  cardholderType?: string;
   expiryDate: string;
   cvv: string;
   paymentSignature?: string;
@@ -83,17 +84,8 @@ const Index = () => {
       
       let paymentSignature = formData.signature;
       
-      if (spouseData && data.cardholderName) {
-        const primaryFullName = `${formData.firstName} ${formData.lastName}`.toLowerCase();
-        const spouseFullName = `${spouseData.firstName} ${spouseData.lastName}`.toLowerCase();
-        const cardholderLower = data.cardholderName.toLowerCase();
-        
-        if (
-          cardholderLower.includes(spouseData.firstName.toLowerCase()) || 
-          cardholderLower.includes(spouseData.lastName.toLowerCase())
-        ) {
-          paymentSignature = spouseData.signature;
-        }
+      if (formData.includeSpouse && spouseData && data.cardholderType === 'spouse') {
+        paymentSignature = spouseData.signature;
       }
       
       const pdfData = {

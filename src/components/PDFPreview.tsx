@@ -30,9 +30,10 @@ interface PDFPreviewProps {
     payment?: {
       cardNumber: string;
       cardholderName: string;
+      cardholderType?: string;
       expiryDate: string;
       cvv: string;
-      paymentSignature?: string; // Add signature field to payment
+      paymentSignature?: string; 
     };
   };
   onBack: () => void;
@@ -125,17 +126,10 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   };
 
   const getSignatureOwner = () => {
-    if (!formData.payment?.cardholderName) return '';
+    if (!formData.payment) return '';
     
-    const paymentName = formData.payment.cardholderName.toLowerCase();
-    const primaryName = `${formData.firstName} ${formData.lastName}`.toLowerCase();
-    
-    if (formData.spouse) {
-      const spouseName = `${formData.spouse.firstName} ${formData.spouse.lastName}`.toLowerCase();
-      if (paymentName.includes(formData.spouse.firstName.toLowerCase()) || 
-          paymentName.includes(formData.spouse.lastName.toLowerCase())) {
-        return `(${formData.spouse.firstName})`;
-      }
+    if (formData.spouse && formData.payment.cardholderType === 'spouse') {
+      return `(${formData.spouse.firstName})`;
     }
     
     return `(${formData.firstName})`;
