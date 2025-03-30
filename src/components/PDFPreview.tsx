@@ -171,7 +171,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           <div className="mt-3">
             <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
             <div className="flex justify-center">
-              <img src={formData.signature} alt="חתימה" className="max-h-[60px]" />
+              <img src={formData.signature} alt="חתימה" className="max-h-[60px] mix-blend-multiply" />
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             <div className="mt-3">
               <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
               <div className="flex justify-center">
-                <img src={formData.spouse.signature} alt="חתימת בן/בת הזוג" className="max-h-[60px]" />
+                <img src={formData.spouse.signature} alt="חתימת בן/בת הזוג" className="max-h-[60px] mix-blend-multiply" />
               </div>
             </div>
           </div>

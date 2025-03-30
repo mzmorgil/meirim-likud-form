@@ -189,7 +189,8 @@ const addSignatureToPdf = async (
     throw new Error('Unsupported signature image format');
   }
 
-  const width = position.maxWidth || 150;
+  // Scale the signature down to half size
+  const width = (position.maxWidth || 150) * 0.5;
   const height = (width / embeddedImage.width) * embeddedImage.height;
 
   page.drawImage(embeddedImage, {
@@ -197,6 +198,7 @@ const addSignatureToPdf = async (
     y: position.y,
     width,
     height,
+    opacity: 0.8, // Add slight transparency
   });
 };
 

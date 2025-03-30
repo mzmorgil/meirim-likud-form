@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +62,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
   title
 }) => {
   const [showImmigrationYear, setShowImmigrationYear] = useState(false);
+  const [fontLoaded, setFontLoaded] = useState(false);
   
   // Use the appropriate schema based on whether this is the primary form
   const formSchema = isPrimary ? primaryFormSchema : personFormSchema;
@@ -74,7 +76,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
       fatherName: '',
       birthDate: undefined,
       gender: '',
-      maritalStatus: '', // Changed from default value
+      maritalStatus: '', 
       birthCountry: 'ישראל',
       immigrationYear: '',
       address: '',
@@ -91,13 +93,40 @@ const PersonForm: React.FC<PersonFormProps> = ({
   const watchLastName = form.watch('lastName');
   const watchBirthCountry = form.watch('birthCountry');
 
+  // Load the Hebrew handwriting font
+  useEffect(() => {
+    const loadFont = async () => {
+      try {
+        const font = new FontFace(
+          'DanaYadAlefAlefAlef', 
+          'url(/fonts/DanaYadAlefAlefAlef-Normal.otf)'
+        );
+        
+        await font.load();
+        document.fonts.add(font);
+        setFontLoaded(true);
+        
+        // Re-generate signature if names exist and font is now loaded
+        if (watchFirstName && watchLastName) {
+          generateAutoSignature(watchFirstName, watchLastName);
+        }
+      } catch (err) {
+        console.error('Failed to load handwriting font:', err);
+        // Fall back to default fonts if there's an error
+        setFontLoaded(true);
+      }
+    };
+    
+    loadFont();
+  }, []);
+
   useEffect(() => {
     // Auto-generate signature for both primary and spouse forms
     // but only generate when both firstName and lastName are present and signature is empty
-    if (watchFirstName && watchLastName && !form.getValues('signature')) {
+    if (fontLoaded && watchFirstName && watchLastName && !form.getValues('signature')) {
       generateAutoSignature(watchFirstName, watchLastName);
     }
-  }, [watchFirstName, watchLastName]);
+  }, [watchFirstName, watchLastName, fontLoaded]);
 
   const generateAutoSignature = (firstName: string, lastName: string) => {
     if (!firstName || !lastName) return;
@@ -108,17 +137,37 @@ const PersonForm: React.FC<PersonFormProps> = ({
     const ctx = canvas.getContext('2d');
     
     if (ctx) {
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Set transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      ctx.font = 'italic 32px "Segoe Script", "Brush Script MT", cursive';
+      // Use the Hebrew handwriting font or fall back to a script font
+      const fontFamily = fontLoaded ? 
+        'DanaYadAlefAlefAlef, "Segoe Script", cursive' : 
+        '"Segoe Script", "Brush Script MT", cursive';
+      
+      // Set up the context for drawing
+      ctx.font = `32px ${fontFamily}`;
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
+      // Apply a slight rotation for a more natural look
+      ctx.save();
+      const angle = (Math.random() * 6 - 3) * Math.PI / 180; // Random angle between -3 and 3 degrees
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(angle);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+      
+      // Add a slight wave to the signature
       const fullName = `${firstName} ${lastName}`;
+      
+      // Draw the signature with a slight natural variation
       ctx.fillText(fullName, canvas.width / 2, canvas.height / 2);
       
+      // Restore the context
+      ctx.restore();
+      
+      // Convert to transparent PNG
       const dataUrl = canvas.toDataURL('image/png');
       form.setValue('signature', dataUrl);
     }
