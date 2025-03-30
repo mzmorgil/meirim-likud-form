@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -224,7 +225,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           </>
         ) : (
           <>
-            <Upload className="ml-2 h-5 w-5" /> התפקד!
+            <Upload className="ml-2 h-5 w-5" /> הצג טופס התפקדות
           </>
         )}
       </Button>

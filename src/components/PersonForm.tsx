@@ -23,7 +23,7 @@ export const personFormSchema = z.object({
     required_error: "יש לבחור תאריך לידה",
   }),
   gender: z.string({ required_error: "יש לבחור מין" }),
-  maritalStatus: z.string({ required_error: "יש לבחור מצב משפחתי" }),
+  maritalStatus: z.string().min(1, { message: "יש לבחור מצב משפחתי" }), // Added validation
   birthCountry: z.string().min(2, { message: "יש לבחור ארץ לידה" }),
   immigrationYear: z.string().optional()
     .refine(val => !val || (Number(val) >= 1948 && Number(val) <= currentYear), {

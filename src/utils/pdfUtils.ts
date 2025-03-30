@@ -355,21 +355,15 @@ export const addFormDataToPdf = async (
 
     // Add payment information if available
     if (formData.payment) {
-      // Add payment information to the PDF with LTR flag for card data
+      // Add payment information to the PDF without labels - just the values
       const payment = formData.payment;
       const paymentX = 150;
       const paymentY = 150;
       
-      await addTextToPdf(page, customFont, `שם בעל הכרטיס: `, { x: paymentX + 200, y: paymentY, fontSize: 10 });
+      // Add only payment field values without labels
       await addTextToPdf(page, customFont, payment.cardholderName, { x: paymentX + 100, y: paymentY, fontSize: 10, rtl: false });
-      
-      await addTextToPdf(page, customFont, `מספר כרטיס: `, { x: paymentX + 200, y: paymentY - 20, fontSize: 10 });
       await addTextToPdf(page, customFont, payment.cardNumber, { x: paymentX + 100, y: paymentY - 20, fontSize: 10, rtl: false });
-      
-      await addTextToPdf(page, customFont, `תוקף: `, { x: paymentX + 200, y: paymentY - 40, fontSize: 10 });
       await addTextToPdf(page, customFont, payment.expiryDate, { x: paymentX + 100, y: paymentY - 40, fontSize: 10, rtl: false });
-      
-      await addTextToPdf(page, customFont, `CVV: `, { x: paymentX + 200, y: paymentY - 60, fontSize: 10 });
       await addTextToPdf(page, customFont, payment.cvv, { x: paymentX + 100, y: paymentY - 60, fontSize: 10, rtl: false });
     }
 
