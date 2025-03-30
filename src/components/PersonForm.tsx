@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,8 +21,8 @@ export const personFormSchema = z.object({
   birthDate: z.date({
     required_error: "יש לבחור תאריך לידה",
   }),
-  gender: z.string({ required_error: "יש לבחור מין" }),
-  maritalStatus: z.string({ required_error: "יש לבחור מצב משפחתי" }),
+  gender: z.string({ required_error: "יש לבחור מין" }).min(1, { message: "יש לבחור מין" }),
+  maritalStatus: z.string().min(1, { message: "יש לבחור מצב משפחתי" }),
   birthCountry: z.string().min(2, { message: "יש לבחור ארץ לידה" }),
   immigrationYear: z.string().optional()
     .refine(val => !val || (Number(val) >= 1948 && Number(val) <= currentYear), {

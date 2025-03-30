@@ -1,4 +1,3 @@
-
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -12,6 +11,7 @@ type FormPosition = {
   y: number;
   fontSize?: number;
   maxWidth?: number;
+  rtl?: boolean; // Add rtl flag for directional text
 };
 
 type FormFields = {
@@ -51,37 +51,37 @@ type FormFields = {
 
 // Form field positions for an A4-sized PDF (595 x 842 points)
 const FORM_FIELDS: FormFields = {
-  idNumber: { x: 495, y: 685, fontSize: 12 },
-  firstName: { x: 175, y: 685, fontSize: 12 },
-  lastName: { x: 325, y: 685, fontSize: 12 },
-  fatherName: { x: 390, y: 625, fontSize: 12 },
-  birthDate: { x: 390, y: 600, fontSize: 12 },
-  gender: { x: 280, y: 600, fontSize: 12 },
-  maritalStatus: { x: 390, y: 575, fontSize: 12 },
-  birthCountry: { x: 200, y: 575, fontSize: 12 },
-  immigrationYear: { x: 390, y: 550, fontSize: 12 },
-  address: { x: 390, y: 525, fontSize: 12 },
-  city: { x: 200, y: 525, fontSize: 12 },
-  zipCode: { x: 390, y: 500, fontSize: 12 },
-  mobile: { x: 390, y: 475, fontSize: 12 },
-  emailUsername: { x: 300, y: 475, fontSize: 12 },
-  emailDomain: { x: 200, y: 475, fontSize: 12 },
+  idNumber: { x: 495, y: 685, fontSize: 10 },
+  firstName: { x: 175, y: 685, fontSize: 10 },
+  lastName: { x: 325, y: 685, fontSize: 10 },
+  fatherName: { x: 390, y: 625, fontSize: 10 },
+  birthDate: { x: 390, y: 600, fontSize: 10 },
+  gender: { x: 280, y: 600, fontSize: 10 },
+  maritalStatus: { x: 390, y: 575, fontSize: 10 },
+  birthCountry: { x: 200, y: 575, fontSize: 10 },
+  immigrationYear: { x: 390, y: 550, fontSize: 10 },
+  address: { x: 390, y: 525, fontSize: 10 },
+  city: { x: 200, y: 525, fontSize: 10 },
+  zipCode: { x: 390, y: 500, fontSize: 10 },
+  mobile: { x: 390, y: 475, fontSize: 10 },
+  emailUsername: { x: 300, y: 475, fontSize: 10 },
+  emailDomain: { x: 200, y: 475, fontSize: 10 },
   signature: { x: 300, y: 300, maxWidth: 150 },
   // Spouse field positions - positioned below the primary applicant
-  spouseIdNumber: { x: 495, y: 425, fontSize: 12 },
-  spouseFirstName: { x: 175, y: 425, fontSize: 12 },
-  spouseLastName: { x: 325, y: 425, fontSize: 12 },
-  spouseFatherName: { x: 390, y: 400, fontSize: 12 },
-  spouseBirthDate: { x: 390, y: 375, fontSize: 12 },
-  spouseGender: { x: 280, y: 375, fontSize: 12 },
-  spouseBirthCountry: { x: 200, y: 350, fontSize: 12 },
-  spouseImmigrationYear: { x: 390, y: 325, fontSize: 12 },
-  spouseAddress: { x: 390, y: 300, fontSize: 12 },
-  spouseCity: { x: 200, y: 300, fontSize: 12 },
-  spouseZipCode: { x: 390, y: 275, fontSize: 12 },
-  spouseMobile: { x: 390, y: 250, fontSize: 12 },
-  spouseEmailUsername: { x: 300, y: 250, fontSize: 12 },
-  spouseEmailDomain: { x: 200, y: 250, fontSize: 12 },
+  spouseIdNumber: { x: 495, y: 425, fontSize: 10 },
+  spouseFirstName: { x: 175, y: 425, fontSize: 10 },
+  spouseLastName: { x: 325, y: 425, fontSize: 10 },
+  spouseFatherName: { x: 390, y: 400, fontSize: 10 },
+  spouseBirthDate: { x: 390, y: 375, fontSize: 10 },
+  spouseGender: { x: 280, y: 375, fontSize: 10 },
+  spouseBirthCountry: { x: 200, y: 350, fontSize: 10 },
+  spouseImmigrationYear: { x: 390, y: 325, fontSize: 10 },
+  spouseAddress: { x: 390, y: 300, fontSize: 10 },
+  spouseCity: { x: 200, y: 300, fontSize: 10 },
+  spouseZipCode: { x: 390, y: 275, fontSize: 10 },
+  spouseMobile: { x: 390, y: 250, fontSize: 10 },
+  spouseEmailUsername: { x: 300, y: 250, fontSize: 10 },
+  spouseEmailDomain: { x: 200, y: 250, fontSize: 10 },
   spouseSignature: { x: 300, y: 200, maxWidth: 150 },
 };
 
@@ -138,6 +138,121 @@ const addDebugGrid = (
       color: rgb(0.5, 0.5, 0.8), // Blue-gray
     });
   }
+};
+
+/**
+ * Adds text to the PDF page using the embedded font, with RTL support for Hebrew
+ */
+const addTextToPdf = async (
+  page: any,
+  font: any,
+  text: string,
+  position?: FormPosition
+): Promise<void> => {
+  if (!position || !text) return;
+
+  const fontSize = position.fontSize || 12;
+  const isRTL = position.rtl !== false; // Default to RTL (true) unless explicitly set to false
+  const textWidth = font.widthOfTextAtSize(text, fontSize);
+
+  // Adjust x-position based on text direction
+  const x = isRTL ? position.x - textWidth : position.x;
+
+  page.drawText(text, {
+    x,
+    y: position.y,
+    size: fontSize,
+    font,
+    color: rgb(0, 0, 0), // Black text
+  });
+};
+
+/**
+ * Adds a signature image to the PDF
+ */
+const addSignatureToPdf = async (
+  pdfDoc: PDFDocument,
+  page: any,
+  signatureDataUrl: string,
+  position?: FormPosition
+): Promise<void> => {
+  if (!position || !signatureDataUrl) return;
+
+  const base64Data = signatureDataUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
+  let embeddedImage;
+
+  if (signatureDataUrl.includes('image/png')) {
+    embeddedImage = await pdfDoc.embedPng(base64Data);
+  } else if (signatureDataUrl.includes('image/jpeg') || signatureDataUrl.includes('image/jpg')) {
+    embeddedImage = await pdfDoc.embedJpg(base64Data);
+  } else {
+    throw new Error('Unsupported signature image format');
+  }
+
+  const width = position.maxWidth || 150;
+  const height = (width / embeddedImage.width) * embeddedImage.height;
+
+  page.drawImage(embeddedImage, {
+    x: position.x,
+    y: position.y,
+    width,
+    height,
+  });
+};
+
+/**
+ * Formats a birth date to use 2-digit year format
+ * @param date The date to format
+ * @returns Formatted date string with 2-digit year
+ */
+const formatBirthDateWith2DigitYear = (date: Date): string => {
+  // Get day, month as they are
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  
+  // Get only the last 2 digits of the year
+  const year = date.getFullYear().toString().slice(-2);
+  
+  // Return in format DD/MM/YY
+  return `${day}/${month}/${year}`;
+};
+
+/**
+ * Formats a credit card number into groups of 4 digits
+ * @param cardNumber The card number to format
+ * @returns Formatted card number with spaces between groups of 4 digits
+ */
+const formatCreditCardNumber = (cardNumber: string): string => {
+  // Remove any non-digit characters
+  const digitsOnly = cardNumber.replace(/\D/g, '');
+  
+  // Split into groups of 4 and join with spaces
+  const groups = [];
+  for (let i = 0; i < digitsOnly.length; i += 4) {
+    groups.push(digitsOnly.slice(i, i + 4));
+  }
+  
+  return groups.join(' ');
+};
+
+/**
+ * Converts marital status from full text to single character code
+ * @param status The full marital status text
+ * @returns Single character code (ר/נ/ג/א)
+ */
+const getMaritalStatusCode = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'רווק/ה': 'ר',
+    'נשוי/אה': 'נ', 
+    'גרוש/ה': 'ג',
+    'אלמן/ה': 'א',
+    'ר': 'ר',
+    'נ': 'נ',
+    'ג': 'ג',
+    'א': 'א'
+  };
+  
+  return statusMap[status] || status;
 };
 
 /**
@@ -202,24 +317,18 @@ export const addFormDataToPdf = async (
       addDebugGrid(page, width, height);
     }
 
-    // Format birthdate for Hebrew locale
+    // Format birthdate with 2-digit year
     const formattedBirthDate = formData.birthDate instanceof Date
-      ? formData.birthDate.toLocaleDateString('he-IL')
+      ? formatBirthDateWith2DigitYear(formData.birthDate)
       : String(formData.birthDate);
 
-    // Map marital status to Hebrew text
-    const maritalStatusMap: Record<string, string> = {
-      'ר': 'רווק/ה', // Single
-      'נ': 'נשוי/אה', // Married
-      'ג': 'גרוש/ה', // Divorced
-      'א': 'אלמן/ה' // Widowed
-    };
-    const maritalStatusText = maritalStatusMap[formData.maritalStatus] || formData.maritalStatus;
+    // Convert marital status to single character code
+    const maritalStatusCode = getMaritalStatusCode(formData.maritalStatus);
 
     // Split email into username and domain parts for better placement on PDF
     const emailParts = formData.email.split('@');
     const emailUsername = emailParts[0];
-    const emailDomain = emailParts.length > 1 ? `@${emailParts[1]}` : '';
+    const emailDomain = emailParts.length > 1 ? emailParts[1] : ''; // Remove @ symbol
 
     // Add all text fields with the embedded font
     await addTextToPdf(page, customFont, formData.idNumber, FORM_FIELDS.idNumber);
@@ -228,7 +337,7 @@ export const addFormDataToPdf = async (
     await addTextToPdf(page, customFont, formData.fatherName, FORM_FIELDS.fatherName);
     await addTextToPdf(page, customFont, formattedBirthDate, FORM_FIELDS.birthDate);
     await addTextToPdf(page, customFont, formData.gender, FORM_FIELDS.gender);
-    await addTextToPdf(page, customFont, maritalStatusText, FORM_FIELDS.maritalStatus);
+    await addTextToPdf(page, customFont, maritalStatusCode, FORM_FIELDS.maritalStatus);
     await addTextToPdf(page, customFont, formData.birthCountry, FORM_FIELDS.birthCountry);
     if (formData.immigrationYear) {
       await addTextToPdf(page, customFont, formData.immigrationYear, FORM_FIELDS.immigrationYear);
@@ -253,15 +362,15 @@ export const addFormDataToPdf = async (
     if (formData.spouse) {
       const spouse = formData.spouse;
       
-      // Format spouse birthdate
+      // Format spouse birthdate with 2-digit year
       const formattedSpouseBirthDate = spouse.birthDate instanceof Date
-        ? spouse.birthDate.toLocaleDateString('he-IL')
+        ? formatBirthDateWith2DigitYear(spouse.birthDate)
         : String(spouse.birthDate);
 
       // Split spouse email
       const spouseEmailParts = spouse.email?.split('@') || [];
       const spouseEmailUsername = spouseEmailParts[0] || '';
-      const spouseEmailDomain = spouseEmailParts.length > 1 ? `@${spouseEmailParts[1]}` : '';
+      const spouseEmailDomain = spouseEmailParts.length > 1 ? spouseEmailParts[1] : ''; // Remove @ symbol
 
       // Add spouse data to PDF
       await addTextToPdf(page, customFont, spouse.idNumber || '', FORM_FIELDS.spouseIdNumber);
@@ -295,15 +404,19 @@ export const addFormDataToPdf = async (
 
     // Add payment information if available
     if (formData.payment) {
-      // Add payment information to the PDF (positioned somewhere appropriate)
+      // Add payment information to the PDF without labels - just the values
       const payment = formData.payment;
       const paymentX = 150;
       const paymentY = 150;
       
-      await addTextToPdf(page, customFont, `שם בעל הכרטיס: ${payment.cardholderName}`, { x: paymentX + 200, y: paymentY, fontSize: 10 });
-      await addTextToPdf(page, customFont, `מספר כרטיס: ${payment.cardNumber}`, { x: paymentX + 200, y: paymentY - 20, fontSize: 10 });
-      await addTextToPdf(page, customFont, `תוקף: ${payment.expiryDate}`, { x: paymentX + 200, y: paymentY - 40, fontSize: 10 });
-      await addTextToPdf(page, customFont, `CVV: ${payment.cvv}`, { x: paymentX + 200, y: paymentY - 60, fontSize: 10 });
+      // Format the credit card number into groups of 4 digits
+      const formattedCardNumber = formatCreditCardNumber(payment.cardNumber);
+      
+      // Add only payment field values without labels
+      await addTextToPdf(page, customFont, payment.cardholderName, { x: paymentX + 100, y: paymentY, fontSize: 10, rtl: false });
+      await addTextToPdf(page, customFont, formattedCardNumber, { x: paymentX + 100, y: paymentY - 20, fontSize: 10, rtl: false });
+      await addTextToPdf(page, customFont, payment.expiryDate, { x: paymentX + 100, y: paymentY - 40, fontSize: 10, rtl: false });
+      await addTextToPdf(page, customFont, payment.cvv, { x: paymentX + 100, y: paymentY - 60, fontSize: 10, rtl: false });
     }
 
     // Save and return the modified PDF
@@ -313,65 +426,6 @@ export const addFormDataToPdf = async (
     console.error('Error adding form data to PDF:', error);
     throw error;
   }
-};
-
-/**
- * Adds text to the PDF page using the embedded font, with RTL support for Hebrew
- */
-const addTextToPdf = async (
-  page: any,
-  font: any,
-  text: string,
-  position?: FormPosition
-): Promise<void> => {
-  if (!position || !text) return;
-
-  const fontSize = position.fontSize || 12;
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-
-  // Adjust x-position for RTL (start from the right)
-  const x = position.x - textWidth;
-
-  page.drawText(text, {
-    x,
-    y: position.y,
-    size: fontSize,
-    font,
-    color: rgb(0, 0, 0), // Black text
-  });
-};
-
-/**
- * Adds a signature image to the PDF
- */
-const addSignatureToPdf = async (
-  pdfDoc: PDFDocument,
-  page: any,
-  signatureDataUrl: string,
-  position?: FormPosition
-): Promise<void> => {
-  if (!position || !signatureDataUrl) return;
-
-  const base64Data = signatureDataUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
-  let embeddedImage;
-
-  if (signatureDataUrl.includes('image/png')) {
-    embeddedImage = await pdfDoc.embedPng(base64Data);
-  } else if (signatureDataUrl.includes('image/jpeg') || signatureDataUrl.includes('image/jpg')) {
-    embeddedImage = await pdfDoc.embedJpg(base64Data);
-  } else {
-    throw new Error('Unsupported signature image format');
-  }
-
-  const width = position.maxWidth || 150;
-  const height = (width / embeddedImage.width) * embeddedImage.height;
-
-  page.drawImage(embeddedImage, {
-    x: position.x,
-    y: position.y,
-    width,
-    height,
-  });
 };
 
 /**

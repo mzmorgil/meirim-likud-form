@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -93,7 +94,22 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
   };
 
   const formatCreditCard = (number: string) => {
-    return `**** **** **** ${number.slice(-4)}`;
+    // Remove any non-digit characters
+    const digitsOnly = number.replace(/\D/g, '');
+    
+    // Format into groups of 4
+    const groups = [];
+    for (let i = 0; i < digitsOnly.length; i += 4) {
+      const group = digitsOnly.slice(i, i + 4);
+      // Only show the last group, mask all others
+      if (i >= digitsOnly.length - 4) {
+        groups.push(group);
+      } else {
+        groups.push('****');
+      }
+    }
+    
+    return groups.join(' ');
   };
   
   const getPaymentAmount = () => {
@@ -102,6 +118,14 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
 
   const getPaymentDescription = () => {
     return formData.includeSpouse ? 'עבור שני מתפקדים' : 'עבור מתפקד יחיד';
+  };
+
+  const formatBirthDate = (date: Date) => {
+    // Format with 2-digit year for display in the preview
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    return `${day}/${month}/${year}`;
   };
 
   return (
@@ -124,7 +148,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               <li><span className="font-semibold">תעודת זהות:</span> {formData.idNumber}</li>
               <li><span className="font-semibold">שם מלא:</span> {formData.firstName} {formData.lastName}</li>
               <li><span className="font-semibold">שם האב:</span> {formData.fatherName}</li>
-              <li><span className="font-semibold">תאריך לידה:</span> {formData.birthDate.toLocaleDateString('he-IL')}</li>
+              <li><span className="font-semibold">תאריך לידה:</span> {formatBirthDate(formData.birthDate)}</li>
               <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.gender)}</li>
               <li><span className="font-semibold">מצב משפחתי:</span> {getMaritalStatusLabel(formData.maritalStatus)}</li>
               <li><span className="font-semibold">ארץ לידה:</span> {formData.birthCountry}</li>
@@ -160,7 +184,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
                 <li><span className="font-semibold">תעודת זהות:</span> {formData.spouse.idNumber}</li>
                 <li><span className="font-semibold">שם מלא:</span> {formData.spouse.firstName} {formData.spouse.lastName}</li>
                 <li><span className="font-semibold">שם האב:</span> {formData.spouse.fatherName}</li>
-                <li><span className="font-semibold">תאריך לידה:</span> {formData.spouse.birthDate.toLocaleDateString('he-IL')}</li>
+                <li><span className="font-semibold">תאריך לידה:</span> {formatBirthDate(formData.spouse.birthDate)}</li>
                 <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.spouse.gender)}</li>
                 <li><span className="font-semibold">ארץ לידה:</span> {formData.spouse.birthCountry}</li>
                 {formData.spouse.immigrationYear && (
@@ -224,7 +248,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
           </>
         ) : (
           <>
-            <Upload className="ml-2 h-5 w-5" /> התפקד!
+            <Upload className="ml-2 h-5 w-5" /> שלח טופס התפקדות
           </>
         )}
       </Button>
@@ -248,7 +272,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             size="sm"
             disabled={isUploading}
           >
-            <Download className="ml-1 h-3 w-3" /> שמור עותק טופס התפקדות
+            <Download className="ml-1 h-3 w-3" /> הורד העתק
           </Button>
         </div>
       </div>
