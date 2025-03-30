@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -8,6 +7,7 @@ import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
+import { FormProvider } from '@/hooks/use-form-context';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
@@ -19,10 +19,9 @@ interface PaymentData {
   cardholderName: string;
   expiryDate: string;
   cvv: string;
-  paymentSignature?: string; // Add field for payment signature
+  paymentSignature?: string;
 }
 
-// Define a type for the combined data used in PDF generation
 interface PDFFormData {
   idNumber: string;
   firstName: string;
@@ -39,13 +38,11 @@ interface PDFFormData {
   mobile: string;
   email: string;
   signature: string;
-  // Additional fields for the PDF that aren't in the base type
   spouse?: Partial<PersonFormValues>;
   payment?: PaymentData;
   includeSpouse?: boolean;
 }
 
-// Type for the preview component props to ensure compatibility
 interface PreviewFormData extends Omit<PDFFormData, 'spouse'> {
   spouse?: PersonFormValues;
   payment?: PaymentData;
@@ -84,16 +81,13 @@ const Index = () => {
         throw new Error('Missing form data');
       }
       
-      // Determine which signature to use for payment based on the cardholder name
       let paymentSignature = formData.signature;
       
-      // If the cardholder name matches the spouse's name more closely than the primary's name
       if (spouseData && data.cardholderName) {
         const primaryFullName = `${formData.firstName} ${formData.lastName}`.toLowerCase();
         const spouseFullName = `${spouseData.firstName} ${spouseData.lastName}`.toLowerCase();
         const cardholderLower = data.cardholderName.toLowerCase();
         
-        // Simple string similarity check - if cardholder name is closer to spouse's name
         if (
           cardholderLower.includes(spouseData.firstName.toLowerCase()) || 
           cardholderLower.includes(spouseData.lastName.toLowerCase())
@@ -102,7 +96,6 @@ const Index = () => {
         }
       }
       
-      // Create the combined data for the PDF with the appropriate signature
       const pdfData = {
         ...formData,
         spouse: spouseData || undefined,
@@ -146,11 +139,9 @@ const Index = () => {
     };
   }, [pdfUrl]);
 
-  // Prepare preview data
   const getPreviewData = (): PreviewFormData | null => {
     if (!formData) return null;
     
-    // Make sure we're returning a complete PreviewFormData object with all required fields
     return {
       idNumber: formData.idNumber,
       firstName: formData.firstName,
@@ -174,72 +165,74 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
-      <div className="max-w-6xl mx-auto">
-        <header className="mb-12 text-center">
-          <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
-            דורית יצחק
+    <FormProvider>
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
+        <div className="max-w-6xl mx-auto">
+          <header className="mb-12 text-center">
+            <div className="inline-block px-3 py-1 mb-3 text-xs font-medium tracking-wider text-primary bg-primary/5 rounded-full animate-fade-in">
+              דורית יצחק
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
+              התפקדות לליכוד
+            </h1>
+            <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              {currentScreen === 'thankYou' && formData 
+                ? `תודה על ההתפקדות, ${formData.firstName}!`
+                : currentScreen === 'preview' && formData
+                  ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData.firstName} ${formData.lastName}` 
+                  : currentScreen === 'spouseForm' && formData
+                    ? `הזנת פרטי בן/בת הזוג של ${formData.firstName} ${formData.lastName}`
+                    : currentScreen === 'paymentForm'
+                      ? "הזנת פרטי תשלום"
+                      : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
+            </p>
+          </header>
+          
+          <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            {currentScreen === 'form' && (
+              <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
+            )}
+            
+            {currentScreen === 'spouseForm' && formData && (
+              <SpouseForm 
+                onSubmit={handleSpouseFormSubmit} 
+                onBack={handleBack}
+                isLoading={isProcessing}
+              />
+            )}
+            
+            {currentScreen === 'paymentForm' && (
+              <PaymentForm 
+                onSubmit={handlePaymentSubmit} 
+                onBack={handleBack}
+                isLoading={isProcessing}
+                includeSpouse={formData?.includeSpouse}
+              />
+            )}
+            
+            {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
+              <PDFPreview 
+                pdfUrl={pdfUrl}
+                pdfBlob={pdfBlob}
+                formData={getPreviewData() as PreviewFormData}
+                onBack={handleBack}
+                onUploadSuccess={handleUploadSuccess}
+              />
+            )}
+            
+            {currentScreen === 'thankYou' && formData && (
+              <ThankYou name={formData.firstName} />
+            )}
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
-            התפקדות לליכוד
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
-            {currentScreen === 'thankYou' && formData 
-              ? `תודה על ההתפקדות, ${formData.firstName}!`
-              : currentScreen === 'preview' && formData
-                ? `צפייה בקדימון של טופס ההתפקדות עבור ${formData.firstName} ${formData.lastName}` 
-                : currentScreen === 'spouseForm' && formData
-                  ? `הזנת פרטי בן/בת הזוג של ${formData.firstName} ${formData.lastName}`
-                  : currentScreen === 'paymentForm'
-                    ? "הזנת פרטי תשלום"
-                    : "מלא את הפרטים כדי ליצור טופס התפקדות לליכוד"}
-          </p>
-        </header>
-        
-        <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
-          {currentScreen === 'form' && (
-            <NameForm onSubmit={handleFormSubmit} isLoading={isProcessing} />
-          )}
           
-          {currentScreen === 'spouseForm' && formData && (
-            <SpouseForm 
-              onSubmit={handleSpouseFormSubmit} 
-              onBack={handleBack}
-              isLoading={isProcessing}
-            />
-          )}
-          
-          {currentScreen === 'paymentForm' && (
-            <PaymentForm 
-              onSubmit={handlePaymentSubmit} 
-              onBack={handleBack}
-              isLoading={isProcessing}
-              includeSpouse={formData?.includeSpouse}
-            />
-          )}
-          
-          {currentScreen === 'preview' && formData && pdfUrl && pdfBlob && (
-            <PDFPreview 
-              pdfUrl={pdfUrl}
-              pdfBlob={pdfBlob}
-              formData={getPreviewData() as PreviewFormData}
-              onBack={handleBack}
-              onUploadSuccess={handleUploadSuccess}
-            />
-          )}
-          
-          {currentScreen === 'thankYou' && formData && (
-            <ThankYou name={formData.firstName} />
-          )}
+          <footer className="mt-16 text-center text-sm text-muted-foreground">
+            <p className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
+              כל הזכויות שמורות &copy; דורית יצחק
+            </p>
+          </footer>
         </div>
-        
-        <footer className="mt-16 text-center text-sm text-muted-foreground">
-          <p className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            כל הזכויות שמורות &copy; דורית יצחק
-          </p>
-        </footer>
       </div>
-    </div>
+    </FormProvider>
   );
 };
 

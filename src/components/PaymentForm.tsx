@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,9 +7,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw, CreditCard, ArrowRight, ChevronsUpDown } from 'lucide-react';
-import { useFormContext } from '@/hooks/use-mobile';
+import { useFormContext } from '@/hooks/use-form-context';
 
-// Define schema for payment form
 const paymentFormSchema = z.object({
   cardholderName: z.string().min(2, { message: "שם בעל/ת הכרטיס חייב להכיל לפחות 2 תווים" }),
   cardNumber: z
@@ -97,19 +95,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     form.setValue('cardNumber', formattedValue.trim());
   };
 
-  // Fetch primary user data from context
   const { primaryUserData, spouseData } = useFormContext();
 
-  // Pre-fill cardholder name when component mounts or when primaryUserData/spouseData changes
   useEffect(() => {
     if (!form.getValues('cardholderName') && primaryUserData) {
-      // Default to primary user's name
       form.setValue('cardholderName', `${primaryUserData.firstName} ${primaryUserData.lastName}`);
     }
   }, [primaryUserData, form]);
 
   const handleSubmit = (values: PaymentFormValues) => {
-    // Clean up the card number (remove spaces) before submission
     const cleanCardNumber = values.cardNumber.replace(/\s/g, '');
     onSubmit({
       ...values,
