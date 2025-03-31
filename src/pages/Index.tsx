@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -63,6 +62,7 @@ const Index = () => {
   const { setPrimaryUserData, setSpouseData: setFormContextSpouseData } = useFormContext();
   
   const handleFormSubmit = async (data: FormData) => {
+    console.log("Primary form handler called with data:", data);
     setFormData(data);
     setPrimaryUserData(data);
     
@@ -74,7 +74,7 @@ const Index = () => {
   };
 
   const handleSpouseFormSubmit = (data: SpouseData) => {
-    console.log("Spouse form submitted:", data);
+    console.log("Spouse form submitted with data:", data);
     setSpouseData(data);
     setFormContextSpouseData(data);
     setCurrentScreen('paymentForm');
@@ -121,7 +121,7 @@ const Index = () => {
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
       setCurrentScreen('preview');
-      toast.success('הטופס נוצר בהצלחה!');
+      toast.success('הטופס נוצר בה��לחה!');
     } catch (error) {
       console.error('Failed to process PDF:', error);
       toast.error('א��רעה שגיאה ביצירת המסמך. אנא נסה שנית');
@@ -131,6 +131,7 @@ const Index = () => {
   };
 
   const handleBack = () => {
+    console.log("Handling back navigation from screen:", currentScreen);
     if (currentScreen === 'spouseForm') {
       setCurrentScreen('form');
     } else if (currentScreen === 'paymentForm') {
@@ -175,6 +176,8 @@ const Index = () => {
     };
   };
 
+  console.log("Current screen:", currentScreen);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
@@ -183,7 +186,7 @@ const Index = () => {
             דורית יצחק
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
-            התפקדות לליכוד
+            התפקדות לליכ��ד
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
             {currentScreen === 'thankYou' && formData 

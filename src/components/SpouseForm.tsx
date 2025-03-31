@@ -10,6 +10,7 @@ interface SpouseFormProps {
 
 const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = false }) => {
   const handleSubmit = (data: PersonFormValues) => {
+    console.log("SpouseForm handleSubmit called with data:", data);
     // Ensure we're properly passing the data to the parent component
     onSubmit(data);
   };

@@ -88,6 +88,11 @@ const PersonForm: React.FC<PersonFormProps> = ({
     },
   });
 
+  // Log form validation state for debugging
+  const formState = form.formState;
+  console.log("Form is valid:", !formState.isSubmitting);
+  console.log("Form validation errors:", formState.errors);
+
   const watchFirstName = form.watch('firstName');
   const watchLastName = form.watch('lastName');
   const watchBirthCountry = form.watch('birthCountry');
@@ -180,6 +185,15 @@ const PersonForm: React.FC<PersonFormProps> = ({
 
   const handleSubmit = (values: any) => {
     console.log(`Submitting ${isPrimary ? 'primary' : 'spouse'} form with values:`, values);
+    console.log("Form submission handler called");
+    
+    // Check if there are any form validation errors
+    if (Object.keys(formState.errors).length > 0) {
+      console.error("Form has validation errors:", formState.errors);
+      return;
+    }
+    
+    // Call the onSubmit callback with the form values
     onSubmit(values);
   };
 
@@ -190,13 +204,18 @@ const PersonForm: React.FC<PersonFormProps> = ({
     }
   };
 
+  console.log("Rendering PersonForm component");
+  
   return (
     <Card className="w-full max-w-3xl mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">{title}</CardTitle>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={(e) => {
+          console.log("Form submit event triggered");
+          form.handleSubmit(handleSubmit)(e);
+        }}>
           <CardContent className="space-y-6">
             <PersonalInfoForm
               control={form.control}
@@ -254,7 +273,10 @@ const PersonForm: React.FC<PersonFormProps> = ({
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={onBack}
+                onClick={() => {
+                  console.log("Back button clicked");
+                  onBack();
+                }}
                 disabled={isLoading}
               >
                 <ArrowRight className="mr-2 h-4 w-4" />
@@ -266,6 +288,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
               className={`${!onBack ? 'w-full max-w-md' : ''} btn-hover-effect`}
               disabled={isLoading}
               size="lg"
+              onClick={() => console.log("Submit button clicked")}
             >
               {isLoading ? (
                 <>
