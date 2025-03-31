@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +25,6 @@ export const maritalStatusOptions = [
 
 export const currentYear = new Date().getFullYear();
 
-// Export the ID validation function for reuse
 export const isValidIsraeliID = (id: string) => {
   const cleanId = String(id).trim();
   if (cleanId.length > 9 || cleanId.length < 5 || isNaN(Number(cleanId))) return false;
@@ -85,7 +83,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Personal Identification Section */}
       <div>
         <h3 className="text-lg font-medium mb-4 pb-2 border-b">פרטים אישיים</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -185,7 +182,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
         </div>
       </div>
 
-      {/* Demographic Information Section */}
       <div>
         <h3 className="text-lg font-medium mb-4 pb-2 border-b">מידע דמוגרפי</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -340,9 +336,8 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
         </div>
       </div>
 
-      {/* Contact Information Section */}
       <div>
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">פרטי התקשרות</h3>
+        <h3 className="text-lg font-medium mb-4 pb-2 border-b">פרטי התקשרות וכתובת</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={control}
@@ -391,90 +386,80 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               </FormItem>
             )}
           />
-        </div>
-      </div>
 
-      {/* Address Section - Only show if includeAddressFields is true */}
-      {includeAddressFields && (
-        <div>
-          <h3 className="text-lg font-medium mb-4 pb-2 border-b">כתובת מגורים</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={control}
-              name={getFieldName("address")}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    כתובת
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="הכנס כתובת" 
-                      {...field} 
-                      className="transition-all focus:ring-2 text-right"
-                      disabled={isLoading}
-                      dir="rtl"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {includeAddressFields && (
+            <>
+              <FormField
+                control={control}
+                name={getFieldName("address")}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      כתובת
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס כתובת" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={control}
-              name={getFieldName("city")}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Home className="h-4 w-4" />
-                    יישוב
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="הכנס יישוב" 
-                      {...field} 
-                      className="transition-all focus:ring-2 text-right"
-                      disabled={isLoading}
-                      dir="rtl"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={control}
+                name={getFieldName("city")}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      יישוב
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס יישוב" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={control}
-              name={getFieldName("zipCode")}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Map className="h-4 w-4" />
-                    מיקוד
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="הכנס מיקוד (אופציונלי)" 
-                      {...field} 
-                      className="transition-all focus:ring-2 text-right"
-                      disabled={isLoading}
-                      dir="rtl"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-      )}
+              <FormField
+                control={control}
+                name={getFieldName("zipCode")}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Map className="h-4 w-4" />
+                      מיקוד
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס מיקוד (אופציונלי)" 
+                        {...field} 
+                        className="transition-all focus:ring-2 text-right"
+                        disabled={isLoading}
+                        dir="rtl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
-      {/* Signature Section */}
-      <div>
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">חתימה</h3>
-        <div className="grid grid-cols-1 gap-6">
           <FormField
             control={control}
             name={getFieldName("signature")}
