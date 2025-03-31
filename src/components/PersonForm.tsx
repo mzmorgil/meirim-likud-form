@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,9 @@ export const personFormSchema = z.object({
       message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
       path: ["immigrationYear"]
     }),
+  address: z.string().min(2, { message: "כתובת חייבת להכיל לפחות 2 תווים" }),
+  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
+  zipCode: z.string().optional(),
   mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),
   email: z.string().email({ message: "כתובת דואר אלקטרוני אינה תקינה" }),
   signature: z.string().min(1, { message: "חתימה נדרשת" }),
