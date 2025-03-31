@@ -34,9 +34,6 @@ interface PDFFormData {
   maritalStatus: string;
   birthCountry: string;
   immigrationYear?: string;
-  address: string;
-  city: string;
-  zipCode?: string;
   mobile: string;
   email: string;
   signature: string;
@@ -161,9 +158,6 @@ const Index = () => {
       maritalStatus: formData.maritalStatus,
       birthCountry: formData.birthCountry,
       immigrationYear: formData.immigrationYear,
-      address: formData.address,
-      city: formData.city,
-      zipCode: formData.zipCode,
       mobile: formData.mobile,
       email: formData.email,
       signature: formData.signature,

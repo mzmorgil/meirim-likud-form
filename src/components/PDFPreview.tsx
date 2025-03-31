@@ -200,11 +200,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               </ul>
               
               <ul className="space-y-1 text-sm">
-                <li><span className="font-semibold">כתובת:</span> {formData.spouse.address}</li>
-                <li><span className="font-semibold">יישוב:</span> {formData.spouse.city}</li>
-                {formData.spouse.zipCode && (
-                  <li><span className="font-semibold">מיקוד:</span> {formData.spouse.zipCode}</li>
-                )}
                 <li><span className="font-semibold">טלפון נייד:</span> {formData.spouse.mobile}</li>
                 <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.spouse.email}</li>
               </ul>

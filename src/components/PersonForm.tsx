@@ -29,9 +29,6 @@ export const personFormSchema = z.object({
       message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
       path: ["immigrationYear"]
     }),
-  address: z.string().min(5, { message: "כתובת חייבת להכיל לפחות 5 תווים" }),
-  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
-  zipCode: z.string().optional(),
   mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),
   email: z.string().email({ message: "כתובת דואר אלקטרוני אינה תקינה" }),
   signature: z.string().min(1, { message: "חתימה נדרשת" }),
@@ -78,9 +75,6 @@ const PersonForm: React.FC<PersonFormProps> = ({
       maritalStatus: '', 
       birthCountry: 'ישראל',
       immigrationYear: '',
-      address: '',
-      city: '',
-      zipCode: '',
       mobile: '',
       email: '',
       signature: '',
@@ -212,30 +206,33 @@ const PersonForm: React.FC<PersonFormProps> = ({
                 control={form.control}
                 name="includeSpouse"
                 render={({ field }) => (
-                  <FormItem 
-                    className={`flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4 cursor-pointer transition-all duration-200 ${
-                      field.value ? 'border-rose-300 bg-rose-50/30 shadow-sm' : 'hover:border-muted-foreground/20'
-                    }`}
-                    onClick={toggleSpouseSelection}
-                  >
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isLoading}
-                        className="mt-1"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2">
-                        <Heart className={`h-4 w-4 ${field.value ? 'text-rose-500 fill-rose-500' : 'text-muted-foreground'} transition-colors`} />
-                        הוסף התפקדות לבן/בת זוג
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        סמן כאן אם ברצונך להוסיף התפקדות עבור בן/בת הזוג שלך
-                      </p>
-                    </div>
+                  <FormItem className="flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4 transition-all duration-200">
+                    <label
+                      htmlFor="includeSpouse"
+                      className={`flex flex-1 items-center cursor-pointer space-x-3 space-x-reverse ${
+                        field.value ? 'border-rose-300 bg-rose-50/30 shadow-sm' : 'hover:border-muted-foreground/20'
+                      }`}
+                    >
+                      <FormControl>
+                        <Checkbox
+                          id="includeSpouse"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                          className="mt-1"
+                          // Remove onClick={(e) => e.stopPropagation()} as it’s no longer needed
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <span className="flex items-center gap-2">
+                          <Heart className={`h-4 w-4 ${field.value ? 'text-rose-500 fill-rose-500' : 'text-muted-foreground'} transition-colors`} />
+                          הוסף התפקדות לבן/בת זוג
+                        </span>
+                        <p className="text-sm text-muted-foreground">
+                          סמן כאן אם ברצונך להוסיף התפקדות עבור בן/בת הזוג שלך
+                        </p>
+                      </div>
+                    </label>
                   </FormItem>
                 )}
               />

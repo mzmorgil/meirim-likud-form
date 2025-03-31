@@ -8,7 +8,7 @@ import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { z } from 'zod';
 import { Control } from 'react-hook-form';
-import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Home, Signature, Users } from 'lucide-react';
+import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Signature, Users } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { countries } from '@/utils/countryData';
 
@@ -326,71 +326,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
         />
       )}
       
-      <FormField
-        control={control}
-        name={getFieldName("address")}
-        render={({ field }) => (
-          <FormItem className="col-span-full">
-            <FormLabel className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              כתובת
-            </FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="הכנס כתובת מלאה" 
-                {...field} 
-                className="transition-all focus:ring-2 text-right"
-                disabled={isLoading}
-                dir="rtl"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name={getFieldName("city")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>יישוב</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="הכנס יישוב" 
-                {...field} 
-                className="transition-all focus:ring-2 text-right"
-                disabled={isLoading}
-                dir="rtl"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name={getFieldName("zipCode")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>מיקוד (אופציונלי)</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="הכנס מיקוד" 
-                {...field} 
-                className="transition-all focus:ring-2 text-right"
-                disabled={isLoading}
-                dir="rtl"
-                type="text"
-                inputMode="numeric"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
       <FormField
         control={control}
         name={getFieldName("mobile")}
