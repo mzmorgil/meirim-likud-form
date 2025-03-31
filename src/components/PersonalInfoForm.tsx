@@ -337,7 +337,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
       </div>
 
       <div>
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">פרטי התקשרות וכתובת</h3>
+        <h3 className="text-lg font-medium mb-4 pb-2 border-b">פרטי התקשרות</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={control}
