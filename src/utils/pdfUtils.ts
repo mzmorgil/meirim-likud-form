@@ -24,6 +24,10 @@ type FormFields = {
   maritalStatus?: FormPosition;
   birthCountry?: FormPosition;
   immigrationYear?: FormPosition;
+  // Add address fields positions
+  address?: FormPosition;
+  city?: FormPosition;
+  zipCode?: FormPosition;
   mobile?: FormPosition;
   emailUsername?: FormPosition;
   emailDomain?: FormPosition;
@@ -35,7 +39,7 @@ type FormFields = {
   spouseFatherName?: FormPosition;
   spouseBirthDate?: FormPosition;
   spouseGender?: FormPosition;
-  spouseMaritalStatus?: FormPosition; // Added spouse marital status
+  spouseMaritalStatus?: FormPosition;
   spouseBirthCountry?: FormPosition;
   spouseImmigrationYear?: FormPosition;
   spouseMobile?: FormPosition;
@@ -50,9 +54,8 @@ type FormFields = {
   paymentCardNumber4?: FormPosition; // Fourth group of 4 digits
   paymentExpiryMonth?: FormPosition; // Month part of expiry
   paymentExpiryYear?: FormPosition; // Year part of expiry
-  paymentCVV?: FormPosition;
   paymentSignature?: FormPosition;
-  payerIdNumber?: FormPosition; // Added payer ID number
+  payerIdNumber?: FormPosition;
 };
 
 // Form field positions for an A4-sized PDF (595 x 842 points)
@@ -66,10 +69,14 @@ const FORM_FIELDS: FormFields = {
   maritalStatus: { x: 295, y: 670, fontSize: 10 },
   birthCountry: { x: 190, y: 658, fontSize: 10 },
   immigrationYear: { x: 100, y: 658, fontSize: 10 },
+  // Add address fields with positions
+  address: { x: 450, y: 632, fontSize: 10 },
+  city: { x: 190, y: 632, fontSize: 10 },
+  zipCode: { x: 80, y: 632, fontSize: 10 },
   mobile: { x: 470, y: 605, fontSize: 10 },
   emailUsername: { x: 280, y: 579, fontSize: 10 },
   emailDomain: { x: 430, y: 579, fontSize: 10 },
-  signature: { x: 80, y: 570, maxWidth: 150 }, // Moved up 5 points on y-axis
+  signature: { x: 80, y: 570, maxWidth: 150 },
   // Spouse field positions - positioned below the primary applicant
   spouseIdNumber: { x: 495, y: 522, fontSize: 10 },
   spouseFirstName: { x: 175, y: 522, fontSize: 10 },
@@ -77,13 +84,13 @@ const FORM_FIELDS: FormFields = {
   spouseFatherName: { x: 480, y: 495, fontSize: 10 },
   spouseBirthDate: { x: 410, y: 507, fontSize: 10 },
   spouseGender: { x: 255, y: 507, fontSize: 10 },
-  spouseMaritalStatus: { x: 295, y: 507, fontSize: 10 }, // Added spouse marital status position
+  spouseMaritalStatus: { x: 295, y: 507, fontSize: 10 },
   spouseBirthCountry: { x: 190, y: 495, fontSize: 10 },
   spouseImmigrationYear: { x: 100, y: 495, fontSize: 10 },
   spouseMobile: { x: 470, y: 469, fontSize: 10 },
   spouseEmailUsername: { x: 280, y: 445, fontSize: 10 },
   spouseEmailDomain: { x: 430, y: 445, fontSize: 10 },
-  spouseSignature: { x: 80, y: 430, maxWidth: 150 }, // Moved up 5 points on y-axis
+  spouseSignature: { x: 80, y: 430, maxWidth: 150 },
   // Payment field positions
   paymentCardholderName: { x: 441, y: 342, fontSize: 10 },
   paymentCardNumber1: { x: 310, y: 372, fontSize: 10 }, // First group position
@@ -92,9 +99,8 @@ const FORM_FIELDS: FormFields = {
   paymentCardNumber4: { x: 460, y: 372, fontSize: 10 }, // Fourth group position
   paymentExpiryMonth: { x: 220, y: 372, fontSize: 10 }, // Month part position
   paymentExpiryYear: { x: 243, y: 372, fontSize: 10 }, // Year part position
-  paymentCVV: { x: 110, y: 380, fontSize: 10 },
-  paymentSignature: { x: 80, y: 320, maxWidth: 150 }, // Moved up 5 points on y-axis
-  payerIdNumber: { x: 300, y: 342, fontSize: 10 }, // Added payer ID position
+  paymentSignature: { x: 80, y: 320, maxWidth: 150 },
+  payerIdNumber: { x: 300, y: 342, fontSize: 10 },
 };
 
 // URL to the font file in the public directory
@@ -322,7 +328,7 @@ export const addFormDataToPdf = async (
       expiryDate: string;
       cvv: string;
       paymentSignature?: string;
-      payerId?: string; // Added payerId
+      payerId?: string;
     };
   },
   debug?: boolean
@@ -379,6 +385,14 @@ export const addFormDataToPdf = async (
     if (formData.immigrationYear) {
       await addTextToPdf(page, customFont, formData.immigrationYear, FORM_FIELDS.immigrationYear);
     }
+    
+    // Add address fields to the PDF
+    await addTextToPdf(page, customFont, formData.address, FORM_FIELDS.address);
+    await addTextToPdf(page, customFont, formData.city, FORM_FIELDS.city);
+    if (formData.zipCode) {
+      await addTextToPdf(page, customFont, formData.zipCode, FORM_FIELDS.zipCode);
+    }
+    
     await addTextToPdf(page, customFont, formData.mobile, FORM_FIELDS.mobile);
     
     // Add email as separate parts for better positioning
@@ -456,7 +470,7 @@ export const addFormDataToPdf = async (
       await addTextToPdf(page, customFont, expiryParts[0], FORM_FIELDS.paymentExpiryMonth);
       await addTextToPdf(page, customFont, expiryParts[1], FORM_FIELDS.paymentExpiryYear);
       
-      await addTextToPdf(page, customFont, formData.payment.cvv, FORM_FIELDS.paymentCVV);
+      // CVV is not required in the PDF, so removed
       
       // Add the payment signature if provided
       if (formData.payment.paymentSignature) {
