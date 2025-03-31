@@ -34,6 +34,9 @@ interface PDFFormData {
   maritalStatus: string;
   birthCountry: string;
   immigrationYear?: string;
+  address: string;
+  city: string;
+  zipCode?: string;
   mobile: string;
   email: string;
   signature: string;
@@ -119,7 +122,7 @@ const Index = () => {
       toast.success('הטופס נוצר בהצלחה!');
     } catch (error) {
       console.error('Failed to process PDF:', error);
-      toast.error('אירעה שגיאה ביצירת המסמך. אנא נסה שנית');
+      toast.error('א��רעה שגיאה ביצירת המסמך. אנא נסה שנית');
     } finally {
       setIsProcessing(false);
     }
@@ -158,6 +161,9 @@ const Index = () => {
       maritalStatus: formData.maritalStatus,
       birthCountry: formData.birthCountry,
       immigrationYear: formData.immigrationYear,
+      address: formData.address,
+      city: formData.city,
+      zipCode: formData.zipCode,
       mobile: formData.mobile,
       email: formData.email,
       signature: formData.signature,

@@ -1,3 +1,4 @@
+
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -274,6 +275,9 @@ export const addFormDataToPdf = async (
     maritalStatus: string;
     birthCountry: string;
     immigrationYear?: string;
+    address: string;
+    city: string;
+    zipCode?: string;
     mobile: string;
     email: string;
     signature: string;
