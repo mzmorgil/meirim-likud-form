@@ -26,7 +26,7 @@ interface PDFPreviewProps {
     email: string;
     signature: string;
     includeSpouse?: boolean;
-    spouse?: PersonFormValues; // Using the non-partial type for the preview
+    spouse?: PersonFormValues;
     payment?: {
       cardNumber: string;
       cardholderName: string;
@@ -125,16 +125,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     return `${day}/${month}/${year}`;
   };
 
-  const getSignatureOwner = () => {
-    if (!formData.payment) return '';
-    
-    if (formData.spouse && formData.payment.cardholderType === 'spouse') {
-      return `(${formData.spouse.firstName})`;
-    }
-    
-    return `(${formData.firstName})`;
-  };
-
   return (
     <div className="glass p-4 rounded-2xl shadow-lg animate-fade-in max-w-3xl mx-auto" dir="rtl">
       <div className="space-y-1 mb-3">
@@ -174,13 +164,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.email}</li>
             </ul>
           </div>
-          
-          <div className="mt-3">
-            <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
-            <div className="flex justify-center">
-              <img src={formData.signature} alt="חתימה" className="max-h-[60px] mix-blend-multiply" />
-            </div>
-          </div>
         </div>
         
         {formData.spouse && (
@@ -200,21 +183,9 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               </ul>
               
               <ul className="space-y-1 text-sm">
-                <li><span className="font-semibold">כתובת:</span> {formData.spouse.address}</li>
-                <li><span className="font-semibold">יישוב:</span> {formData.spouse.city}</li>
-                {formData.spouse.zipCode && (
-                  <li><span className="font-semibold">מיקוד:</span> {formData.spouse.zipCode}</li>
-                )}
                 <li><span className="font-semibold">טלפון נייד:</span> {formData.spouse.mobile}</li>
                 <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.spouse.email}</li>
               </ul>
-            </div>
-            
-            <div className="mt-3">
-              <h3 className="text-sm font-semibold mb-1">חתימה:</h3>
-              <div className="flex justify-center">
-                <img src={formData.spouse.signature} alt="חתימת בן/בת הזוג" className="max-h-[60px] mix-blend-multiply" />
-              </div>
             </div>
           </div>
         )}
@@ -228,15 +199,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               <li><span className="font-semibold">תוקף:</span> {formData.payment.expiryDate}</li>
               <li><span className="font-semibold">סכום לתשלום:</span> {getPaymentAmount()} ({getPaymentDescription()})</li>
             </ul>
-            
-            {formData.payment.paymentSignature && (
-              <div className="mt-3">
-                <h3 className="text-sm font-semibold mb-1">חתימה: {getSignatureOwner()}</h3>
-                <div className="flex justify-center">
-                  <img src={formData.payment.paymentSignature} alt="חתימת בעל הכרטיס" className="max-h-[60px] mix-blend-multiply" />
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -24,9 +25,6 @@ type FormFields = {
   maritalStatus?: FormPosition;
   birthCountry?: FormPosition;
   immigrationYear?: FormPosition;
-  address?: FormPosition;
-  city?: FormPosition;
-  zipCode?: FormPosition;
   mobile?: FormPosition;
   emailUsername?: FormPosition;
   emailDomain?: FormPosition;
@@ -40,9 +38,6 @@ type FormFields = {
   spouseGender?: FormPosition;
   spouseBirthCountry?: FormPosition;
   spouseImmigrationYear?: FormPosition;
-  spouseAddress?: FormPosition;
-  spouseCity?: FormPosition;
-  spouseZipCode?: FormPosition;
   spouseMobile?: FormPosition;
   spouseEmailUsername?: FormPosition;
   spouseEmailDomain?: FormPosition;
@@ -65,13 +60,10 @@ const FORM_FIELDS: FormFields = {
   maritalStatus: { x: 295, y: 670, fontSize: 10 },
   birthCountry: { x: 190, y: 658, fontSize: 10 },
   immigrationYear: { x: 100, y: 658, fontSize: 10 },
-  address: { x: 480, y: 632, fontSize: 10 },
-  city: { x: 270, y: 632, fontSize: 10 },
-  zipCode: { x: 130, y: 632, fontSize: 10 },
   mobile: { x: 470, y: 605, fontSize: 10 },
   emailUsername: { x: 280, y: 579, fontSize: 10 },
   emailDomain: { x: 430, y: 579, fontSize: 10 },
-  signature: { x: 80, y: 574, maxWidth: 150 },
+  signature: { x: 80, y: 560, maxWidth: 150 },
   // Spouse field positions - positioned below the primary applicant
   spouseIdNumber: { x: 495, y: 522, fontSize: 10 },
   spouseFirstName: { x: 175, y: 522, fontSize: 10 },
@@ -81,13 +73,10 @@ const FORM_FIELDS: FormFields = {
   spouseGender: { x: 255, y: 507, fontSize: 10 },
   spouseBirthCountry: { x: 190, y: 495, fontSize: 10 },
   spouseImmigrationYear: { x: 100, y: 495, fontSize: 10 },
-  spouseAddress: { x: 480, y: 469, fontSize: 10 },
-  spouseCity: { x: 270, y: 469, fontSize: 10 },
-  spouseZipCode: { x: 130, y: 469, fontSize: 10 },
   spouseMobile: { x: 470, y: 469, fontSize: 10 },
-  spouseEmailUsername: { x: 280, y: 442, fontSize: 10 },
-  spouseEmailDomain: { x: 430, y: 442, fontSize: 10 },
-  spouseSignature: { x: 80, y: 435, maxWidth: 150 },
+  spouseEmailUsername: { x: 280, y: 445, fontSize: 10 },
+  spouseEmailDomain: { x: 430, y: 445, fontSize: 10 },
+  spouseSignature: { x: 80, y: 420, maxWidth: 150 },
   paymentCardholderName: { x: 300, y: 150, fontSize: 10 },
   paymentCardNumber: { x: 300, y: 130, fontSize: 10 },
   paymentExpiryDate: { x: 300, y: 110, fontSize: 10 },
@@ -355,11 +344,6 @@ export const addFormDataToPdf = async (
     if (formData.immigrationYear) {
       await addTextToPdf(page, customFont, formData.immigrationYear, FORM_FIELDS.immigrationYear);
     }
-    await addTextToPdf(page, customFont, formData.address, FORM_FIELDS.address);
-    await addTextToPdf(page, customFont, formData.city, FORM_FIELDS.city);
-    if (formData.zipCode) {
-      await addTextToPdf(page, customFont, formData.zipCode, FORM_FIELDS.zipCode);
-    }
     await addTextToPdf(page, customFont, formData.mobile, FORM_FIELDS.mobile);
     
     // Add email as separate parts for better positioning
@@ -396,13 +380,6 @@ export const addFormDataToPdf = async (
       
       if (spouse.immigrationYear) {
         await addTextToPdf(page, customFont, spouse.immigrationYear, FORM_FIELDS.spouseImmigrationYear);
-      }
-      
-      await addTextToPdf(page, customFont, spouse.address || '', FORM_FIELDS.spouseAddress);
-      await addTextToPdf(page, customFont, spouse.city || '', FORM_FIELDS.spouseCity);
-      
-      if (spouse.zipCode) {
-        await addTextToPdf(page, customFont, spouse.zipCode, FORM_FIELDS.spouseZipCode);
       }
       
       await addTextToPdf(page, customFont, spouse.mobile || '', FORM_FIELDS.spouseMobile);

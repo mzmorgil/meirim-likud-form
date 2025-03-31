@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +10,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw, Heart, ArrowRight } from 'lucide-react';
 import PersonalInfoForm, { currentYear, isValidIsraeliID, maritalStatusOptions } from './PersonalInfoForm';
 
-// Create a common form schema that can be used for both primary applicant and spouse
-export const personFormSchema = z.object({
+// Create a base schema for common fields
+const basePersonFormSchema = z.object({
   idNumber: z.string()
     .min(5, { message: "מספר תעודת זהות חייב להכיל לפחות 5 ספרות" })
     .max(9, { message: "מספר תעודת זהות לא יכול להכיל יותר מ-9 ספרות" })
@@ -29,16 +30,24 @@ export const personFormSchema = z.object({
       message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
       path: ["immigrationYear"]
     }),
-  address: z.string().min(5, { message: "כתובת חייבת להכיל לפחות 5 תווים" }),
-  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
-  zipCode: z.string().optional(),
   mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),
   email: z.string().email({ message: "כתובת דואר אלקטרוני אינה תקינה" }),
   signature: z.string().min(1, { message: "חתימה נדרשת" }),
 });
 
-// Extend the schema for primary applicant to include the spouse checkbox
-export const primaryFormSchema = personFormSchema.extend({
+// Create address schema
+const addressSchema = z.object({
+  address: z.string().min(2, { message: "כתובת חייבת להכיל לפחות 2 תווים" }),
+  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
+  zipCode: z.string().optional(),
+});
+
+// Create schema with address fields
+export const personFormSchema = basePersonFormSchema;
+
+// Extend the schema for primary applicant to include the spouse checkbox and address fields
+export const primaryFormSchema = basePersonFormSchema.extend({
+  ...addressSchema.shape,
   includeSpouse: z.boolean().default(false),
 });
 
@@ -51,6 +60,7 @@ interface PersonFormProps {
   onBack?: () => void;
   isLoading?: boolean;
   title: string;
+  includeAddressFields?: boolean;
 }
 
 const PersonForm: React.FC<PersonFormProps> = ({ 
@@ -58,13 +68,32 @@ const PersonForm: React.FC<PersonFormProps> = ({
   onSubmit, 
   onBack, 
   isLoading = false,
-  title
+  title,
+  includeAddressFields = isPrimary // Default to isPrimary if not explicitly set
 }) => {
   const [showImmigrationYear, setShowImmigrationYear] = useState(false);
   const [fontLoaded, setFontLoaded] = useState(false);
   
-  // Use the appropriate schema based on whether this is the primary form
-  const formSchema = isPrimary ? primaryFormSchema : personFormSchema;
+  // Use dynamic schema based on whether we need address fields
+  const getDynamicSchema = () => {
+    const baseSchema = isPrimary ? primaryFormSchema : basePersonFormSchema;
+    
+    // If it's not primary and we don't include address fields, use the base schema
+    if (!isPrimary && !includeAddressFields) {
+      return baseSchema;
+    }
+    
+    // If it's not primary but we do include address fields, extend the base schema
+    if (!isPrimary && includeAddressFields) {
+      return baseSchema.extend(addressSchema.shape);
+    }
+    
+    // For primary forms, the schema already includes address fields
+    return baseSchema;
+  };
+  
+  // Get the appropriate schema
+  const formSchema = getDynamicSchema();
   
   const form = useForm<any>({
     resolver: zodResolver(formSchema),
@@ -78,9 +107,11 @@ const PersonForm: React.FC<PersonFormProps> = ({
       maritalStatus: '', 
       birthCountry: 'ישראל',
       immigrationYear: '',
-      address: '',
-      city: '',
-      zipCode: '',
+      ...(includeAddressFields ? {
+        address: '',
+        city: '',
+        zipCode: '',
+      } : {}),
       mobile: '',
       email: '',
       signature: '',
@@ -88,9 +119,20 @@ const PersonForm: React.FC<PersonFormProps> = ({
     },
   });
 
+  // Log form validation state for debugging
+  const formState = form.formState;
+  console.log("Form is valid:", !formState.isSubmitting);
+  console.log("Form validation errors:", formState.errors);
+
   const watchFirstName = form.watch('firstName');
   const watchLastName = form.watch('lastName');
   const watchBirthCountry = form.watch('birthCountry');
+  const watchIncludeSpouse = isPrimary ? form.watch('includeSpouse') : false;
+
+  // Set showImmigrationYear based on birthCountry
+  useEffect(() => {
+    setShowImmigrationYear(watchBirthCountry !== 'ישראל');
+  }, [watchBirthCountry]);
 
   // Load the Hebrew handwriting font
   useEffect(() => {
@@ -173,25 +215,48 @@ const PersonForm: React.FC<PersonFormProps> = ({
   };
 
   const handleSubmit = (values: any) => {
+    console.log(`Submitting ${isPrimary ? 'primary' : 'spouse'} form with values:`, values);
+    console.log("Form submission handler called");
+    
+    // Check if there are any form validation errors
+    if (Object.keys(formState.errors).length > 0) {
+      console.error("Form has validation errors:", formState.errors);
+      return;
+    }
+    
+    // Call the onSubmit callback with the form values
     onSubmit(values);
   };
 
+  const toggleSpouseSelection = () => {
+    if (isPrimary && !isLoading) {
+      const currentValue = form.getValues('includeSpouse');
+      form.setValue('includeSpouse', !currentValue);
+    }
+  };
+
+  console.log("Rendering PersonForm component");
+  
   return (
     <Card className="w-full max-w-3xl mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">{title}</CardTitle>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={(e) => {
+          console.log("Form submit event triggered");
+          form.handleSubmit(handleSubmit)(e);
+        }}>
           <CardContent className="space-y-6">
             <PersonalInfoForm
               control={form.control}
               isLoading={isLoading}
               formPrefix=""
               includeMaritalStatus={true}
+              includeAddressFields={includeAddressFields}
               generateAutoSignature={generateAutoSignature}
               watchBirthCountry={watchBirthCountry}
-              setShowImmigrationYear={setShowImmigrationYear}
+              showImmigrationYear={showImmigrationYear}
             />
 
             {isPrimary && (
@@ -199,23 +264,36 @@ const PersonForm: React.FC<PersonFormProps> = ({
                 control={form.control}
                 name="includeSpouse"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4">
+                  <FormItem 
+                    className={`flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4 ${
+                      field.value 
+                        ? 'border-gray-700 border-2 bg-gray-50/40 shadow-md' 
+                        : 'hover:border-gray-400 hover:bg-gray-50/30'
+                    }`}
+                  >
                     <FormControl>
                       <Checkbox
+                        id="includeSpouse"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isLoading}
+                        className="mt-1"
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-rose-500" />
-                        הוסף התפקדות לבן/בת זוג
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        סמן כאן אם ברצונך להוסיף התפקדות עבור בן/בת הזוג שלך
-                      </p>
-                    </div>
+                    <label
+                      htmlFor="includeSpouse"
+                      className="flex-1 cursor-pointer"
+                    >
+                      <div className="space-y-1 leading-none">
+                        <span className="flex items-center gap-2">
+                          <Heart className={`h-4 w-4 ${field.value ? 'text-rose-700 text-rose-700' : 'text-muted-foreground'} transition-colors`} />
+                          הוסף התפקדות לבן/בת זוג
+                        </span>
+                        <p className="text-sm text-muted-foreground">
+                          סמן כאן אם ברצונך להוסיף התפקדות עבור בן/בת הזוג שלך
+                        </p>
+                      </div>
+                    </label>
                   </FormItem>
                 )}
               />
@@ -226,7 +304,10 @@ const PersonForm: React.FC<PersonFormProps> = ({
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={onBack}
+                onClick={() => {
+                  console.log("Back button clicked");
+                  onBack();
+                }}
                 disabled={isLoading}
               >
                 <ArrowRight className="mr-2 h-4 w-4" />
@@ -238,6 +319,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
               className={`${!onBack ? 'w-full max-w-md' : ''} btn-hover-effect`}
               disabled={isLoading}
               size="lg"
+              onClick={() => console.log("Submit button clicked")}
             >
               {isLoading ? (
                 <>

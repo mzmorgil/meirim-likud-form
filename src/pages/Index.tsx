@@ -62,6 +62,7 @@ const Index = () => {
   const { setPrimaryUserData, setSpouseData: setFormContextSpouseData } = useFormContext();
   
   const handleFormSubmit = async (data: FormData) => {
+    console.log("Primary form handler called with data:", data);
     setFormData(data);
     setPrimaryUserData(data);
     
@@ -73,6 +74,7 @@ const Index = () => {
   };
 
   const handleSpouseFormSubmit = (data: SpouseData) => {
+    console.log("Spouse form submitted with data:", data);
     setSpouseData(data);
     setFormContextSpouseData(data);
     setCurrentScreen('paymentForm');
@@ -119,16 +121,17 @@ const Index = () => {
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
       setCurrentScreen('preview');
-      toast.success('הטופס נוצר בהצלחה!');
+      toast.success('הטופס נוצר בה��לחה!');
     } catch (error) {
       console.error('Failed to process PDF:', error);
-      toast.error('אירעה שגיאה ביצירת המסמך. אנא נסה שנית');
+      toast.error('א��רעה שגיאה ביצירת המסמך. אנא נסה שנית');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleBack = () => {
+    console.log("Handling back navigation from screen:", currentScreen);
     if (currentScreen === 'spouseForm') {
       setCurrentScreen('form');
     } else if (currentScreen === 'paymentForm') {
@@ -172,6 +175,8 @@ const Index = () => {
       payment: paymentData || undefined
     };
   };
+
+  console.log("Current screen:", currentScreen);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 px-4 md:px-6 py-8" dir="rtl">

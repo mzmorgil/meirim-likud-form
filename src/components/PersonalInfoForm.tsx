@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -9,7 +9,7 @@ import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { z } from 'zod';
 import { Control } from 'react-hook-form';
-import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Home, Signature, Users } from 'lucide-react';
+import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Signature, Users, MapPin, Home, Map } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { countries } from '@/utils/countryData';
 
@@ -47,9 +47,10 @@ interface PersonalInfoFormProps {
   isLoading?: boolean;
   formPrefix?: string;
   includeMaritalStatus?: boolean;
+  includeAddressFields?: boolean;
   generateAutoSignature?: (firstName: string, lastName: string) => void;
   watchBirthCountry: string;
-  setShowImmigrationYear: (show: boolean) => void;
+  showImmigrationYear: boolean;
 }
 
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
@@ -57,18 +58,14 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   isLoading = false,
   formPrefix = "",
   includeMaritalStatus = false,
+  includeAddressFields = true,
   generateAutoSignature,
   watchBirthCountry,
-  setShowImmigrationYear
+  showImmigrationYear
 }) => {
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const signatureRef = useRef<SignatureCanvas>(null);
-  const showImmigrationYear = watchBirthCountry !== 'ישראל';
   const nameId = formPrefix ? `${formPrefix}-` : '';
-
-  useEffect(() => {
-    setShowImmigrationYear(watchBirthCountry !== 'ישראל');
-  }, [watchBirthCountry, setShowImmigrationYear]);
 
   const clearSignature = () => {
     if (signatureRef.current) {
@@ -216,13 +213,16 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             <FormControl>
               <RadioGroup
                 onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex flex-row space-x-4 space-x-reverse text-right"
+                value={field.value}
+                className="flex flex-row space-x-4 space-x-reverse rtl"
                 disabled={isLoading}
               >
                 {genderOptions.map(option => (
                   <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
-                    <RadioGroupItem value={option.value} id={`${nameId}gender-${option.value}`} />
+                    <RadioGroupItem 
+                      value={option.value} 
+                      id={`${nameId}gender-${option.value}`} 
+                    />
                     <FormLabel
                       htmlFor={`${nameId}gender-${option.value}`}
                       className="font-normal cursor-pointer"
@@ -250,7 +250,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               </FormLabel>
               <Select 
                 onValueChange={field.onChange} 
-                defaultValue={field.value}
+                value={field.value}
                 disabled={isLoading}
               >
                 <FormControl>
@@ -283,7 +283,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             </FormLabel>
             <Select 
               onValueChange={field.onChange} 
-              defaultValue={field.value}
+              value={field.value}
               disabled={isLoading}
             >
               <FormControl>
@@ -329,71 +329,79 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
         />
       )}
       
-      <FormField
-        control={control}
-        name={getFieldName("address")}
-        render={({ field }) => (
-          <FormItem className="col-span-full">
-            <FormLabel className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              כתובת
-            </FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="הכנס כתובת מלאה" 
-                {...field} 
-                className="transition-all focus:ring-2 text-right"
-                disabled={isLoading}
-                dir="rtl"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {includeAddressFields && (
+        <>
+          <FormField
+            control={control}
+            name={getFieldName("address")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  כתובת
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="הכנס כתובת" 
+                    {...field} 
+                    className="transition-all focus:ring-2 text-right"
+                    disabled={isLoading}
+                    dir="rtl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={control}
-        name={getFieldName("city")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>יישוב</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="הכנס יישוב" 
-                {...field} 
-                className="transition-all focus:ring-2 text-right"
-                disabled={isLoading}
-                dir="rtl"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          <FormField
+            control={control}
+            name={getFieldName("city")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  יישוב
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="הכנס יישוב" 
+                    {...field} 
+                    className="transition-all focus:ring-2 text-right"
+                    disabled={isLoading}
+                    dir="rtl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={control}
-        name={getFieldName("zipCode")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>מיקוד (אופציונלי)</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="הכנס מיקוד" 
-                {...field} 
-                className="transition-all focus:ring-2 text-right"
-                disabled={isLoading}
-                dir="rtl"
-                type="text"
-                inputMode="numeric"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
+          <FormField
+            control={control}
+            name={getFieldName("zipCode")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Map className="h-4 w-4" />
+                  מיקוד
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="הכנס מיקוד (אופציונלי)" 
+                    {...field} 
+                    className="transition-all focus:ring-2 text-right"
+                    disabled={isLoading}
+                    dir="rtl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
+      
       <FormField
         control={control}
         name={getFieldName("mobile")}
