@@ -99,7 +99,7 @@ const FORM_FIELDS: FormFields = {
   paymentCardNumber4: { x: 460, y: 372, fontSize: 10 }, // Fourth group position
   paymentExpiryMonth: { x: 220, y: 372, fontSize: 10 }, // Month part position
   paymentExpiryYear: { x: 243, y: 372, fontSize: 10 }, // Year part position
-  paymentSignature: { x: 80, y: 320, maxWidth: 150 },
+  paymentSignature: { x: 80, y: 330, maxWidth: 150 },
   payerIdNumber: { x: 300, y: 342, fontSize: 10 },
 };
 
