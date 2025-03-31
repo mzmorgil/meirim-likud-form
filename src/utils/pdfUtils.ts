@@ -1,4 +1,3 @@
-
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -63,7 +62,7 @@ const FORM_FIELDS: FormFields = {
   mobile: { x: 470, y: 605, fontSize: 10 },
   emailUsername: { x: 280, y: 579, fontSize: 10 },
   emailDomain: { x: 430, y: 579, fontSize: 10 },
-  signature: { x: 80, y: 560, maxWidth: 150 },
+  signature: { x: 80, y: 565, maxWidth: 150 },
   // Spouse field positions - positioned below the primary applicant
   spouseIdNumber: { x: 495, y: 522, fontSize: 10 },
   spouseFirstName: { x: 175, y: 522, fontSize: 10 },
@@ -76,12 +75,12 @@ const FORM_FIELDS: FormFields = {
   spouseMobile: { x: 470, y: 469, fontSize: 10 },
   spouseEmailUsername: { x: 280, y: 445, fontSize: 10 },
   spouseEmailDomain: { x: 430, y: 445, fontSize: 10 },
-  spouseSignature: { x: 80, y: 420, maxWidth: 150 },
+  spouseSignature: { x: 80, y: 425, maxWidth: 150 },
   paymentCardholderName: { x: 300, y: 150, fontSize: 10 },
   paymentCardNumber: { x: 300, y: 130, fontSize: 10 },
   paymentExpiryDate: { x: 300, y: 110, fontSize: 10 },
   paymentCVV: { x: 300, y: 90, fontSize: 10 },
-  paymentSignature: { x: 300, y: 70, maxWidth: 150 },
+  paymentSignature: { x: 300, y: 75, maxWidth: 150 },
 };
 
 // URL to the font file in the public directory
@@ -188,8 +187,8 @@ const addSignatureToPdf = async (
     throw new Error('Unsupported signature image format');
   }
 
-  // Scale the signature down to half size
-  const width = (position.maxWidth || 150) * 0.5;
+  // Increase signature size from 0.5 to 0.7 (70% of original size instead of 50%)
+  const width = (position.maxWidth || 150) * 0.7;
   const height = (width / embeddedImage.width) * embeddedImage.height;
 
   page.drawImage(embeddedImage, {
