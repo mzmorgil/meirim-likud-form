@@ -76,7 +76,8 @@ const FORM_FIELDS: FormFields = {
   spouseEmailUsername: { x: 280, y: 445, fontSize: 10 },
   spouseEmailDomain: { x: 430, y: 445, fontSize: 10 },
   spouseSignature: { x: 80, y: 425, maxWidth: 150 },
-  paymentCardholderName: { x: 300, y: 150, fontSize: 10 },
+  // Payment field positions
+  paymentCardholderName: { x: 440, y: 340, fontSize: 10 },
   paymentCardNumber: { x: 300, y: 130, fontSize: 10 },
   paymentExpiryDate: { x: 300, y: 110, fontSize: 10 },
   paymentCVV: { x: 300, y: 90, fontSize: 10 },
