@@ -71,8 +71,8 @@ const FORM_FIELDS: FormFields = {
   immigrationYear: { x: 100, y: 658, fontSize: 10 },
   // Add address fields with positions
   address: { x: 450, y: 632, fontSize: 10 },
-  city: { x: 190, y: 632, fontSize: 10 },
-  zipCode: { x: 80, y: 632, fontSize: 10 },
+  city: { x: 275, y: 632, fontSize: 10 },
+  zipCode: { x: 135, y: 632, fontSize: 10 },
   mobile: { x: 470, y: 605, fontSize: 10 },
   emailUsername: { x: 280, y: 579, fontSize: 10 },
   emailDomain: { x: 430, y: 579, fontSize: 10 },
