@@ -79,6 +79,9 @@ const PersonForm: React.FC<PersonFormProps> = ({
       maritalStatus: '', 
       birthCountry: 'ישראל',
       immigrationYear: '',
+      address: '',
+      city: '',
+      zipCode: '',
       mobile: '',
       email: '',
       signature: '',
@@ -200,6 +203,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
               isLoading={isLoading}
               formPrefix=""
               includeMaritalStatus={true}
+              includeAddressFields={isPrimary}
               generateAutoSignature={generateAutoSignature}
               watchBirthCountry={watchBirthCountry}
               showImmigrationYear={showImmigrationYear}

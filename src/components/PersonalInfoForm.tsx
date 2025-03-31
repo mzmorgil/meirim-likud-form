@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,7 @@ import HebrewDatePicker from '@/components/HebrewDatePicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { z } from 'zod';
 import { Control } from 'react-hook-form';
-import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Signature, Users } from 'lucide-react';
+import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Signature, Users, MapPin, Home, Map } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { countries } from '@/utils/countryData';
 
@@ -46,6 +47,7 @@ interface PersonalInfoFormProps {
   isLoading?: boolean;
   formPrefix?: string;
   includeMaritalStatus?: boolean;
+  includeAddressFields?: boolean;
   generateAutoSignature?: (firstName: string, lastName: string) => void;
   watchBirthCountry: string;
   showImmigrationYear: boolean;
@@ -56,6 +58,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   isLoading = false,
   formPrefix = "",
   includeMaritalStatus = false,
+  includeAddressFields = true,
   generateAutoSignature,
   watchBirthCountry,
   showImmigrationYear
@@ -324,6 +327,79 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             </FormItem>
           )}
         />
+      )}
+      
+      {includeAddressFields && (
+        <>
+          <FormField
+            control={control}
+            name={getFieldName("address")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  כתובת
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="הכנס כתובת" 
+                    {...field} 
+                    className="transition-all focus:ring-2 text-right"
+                    disabled={isLoading}
+                    dir="rtl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name={getFieldName("city")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  יישוב
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="הכנס יישוב" 
+                    {...field} 
+                    className="transition-all focus:ring-2 text-right"
+                    disabled={isLoading}
+                    dir="rtl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name={getFieldName("zipCode")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Map className="h-4 w-4" />
+                  מיקוד
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="הכנס מיקוד (אופציונלי)" 
+                    {...field} 
+                    className="transition-all focus:ring-2 text-right"
+                    disabled={isLoading}
+                    dir="rtl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
       )}
       
       <FormField
