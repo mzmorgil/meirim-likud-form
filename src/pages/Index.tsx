@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -73,6 +74,7 @@ const Index = () => {
   };
 
   const handleSpouseFormSubmit = (data: SpouseData) => {
+    console.log("Spouse form submitted:", data);
     setSpouseData(data);
     setFormContextSpouseData(data);
     setCurrentScreen('paymentForm');

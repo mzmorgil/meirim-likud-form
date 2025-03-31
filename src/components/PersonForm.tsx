@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -180,6 +179,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
   };
 
   const handleSubmit = (values: any) => {
+    console.log(`Submitting ${isPrimary ? 'primary' : 'spouse'} form with values:`, values);
     onSubmit(values);
   };
 
