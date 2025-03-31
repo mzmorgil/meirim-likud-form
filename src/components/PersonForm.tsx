@@ -91,6 +91,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
   const watchFirstName = form.watch('firstName');
   const watchLastName = form.watch('lastName');
   const watchBirthCountry = form.watch('birthCountry');
+  const watchIncludeSpouse = isPrimary ? form.watch('includeSpouse') : false;
 
   // Load the Hebrew handwriting font
   useEffect(() => {
@@ -176,6 +177,13 @@ const PersonForm: React.FC<PersonFormProps> = ({
     onSubmit(values);
   };
 
+  const toggleSpouseSelection = () => {
+    if (isPrimary && !isLoading) {
+      const currentValue = form.getValues('includeSpouse');
+      form.setValue('includeSpouse', !currentValue);
+    }
+  };
+
   return (
     <Card className="w-full max-w-3xl mx-auto animate-fade-up" dir="rtl">
       <CardHeader>
@@ -199,17 +207,24 @@ const PersonForm: React.FC<PersonFormProps> = ({
                 control={form.control}
                 name="includeSpouse"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4">
+                  <FormItem 
+                    className={`flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4 cursor-pointer transition-all duration-200 ${
+                      field.value ? 'border-rose-300 bg-rose-50/30 shadow-sm' : 'hover:border-muted-foreground/20'
+                    }`}
+                    onClick={toggleSpouseSelection}
+                  >
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isLoading}
+                        className="mt-1"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-rose-500" />
+                        <Heart className={`h-4 w-4 ${field.value ? 'text-rose-500 fill-rose-500' : 'text-muted-foreground'} transition-colors`} />
                         הוסף התפקדות לבן/בת זוג
                       </FormLabel>
                       <p className="text-sm text-muted-foreground">
