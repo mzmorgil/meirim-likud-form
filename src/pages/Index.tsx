@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -22,6 +23,7 @@ interface PaymentData {
   expiryDate: string;
   cvv: string;
   paymentSignature?: string;
+  payerId?: string; // Added payerId property to fix the type error
 }
 
 interface PDFFormData {
@@ -102,9 +104,11 @@ const Index = () => {
       }
       
       let paymentSignature = formData.signature;
+      let payerId = formData.idNumber;
       
       if (formData.includeSpouse && spouseData && data.cardholderType === 'spouse') {
         paymentSignature = spouseData.signature;
+        payerId = spouseData.idNumber;
       }
       
       const pdfData = {
@@ -112,7 +116,8 @@ const Index = () => {
         spouse: spouseData || undefined,
         payment: {
           ...data,
-          paymentSignature: paymentSignature
+          paymentSignature: paymentSignature,
+          payerId: payerId
         }
       } as PDFFormData;
       
@@ -121,10 +126,10 @@ const Index = () => {
       const objectUrl = URL.createObjectURL(modifiedPdfBlob);
       setPdfUrl(objectUrl);
       setCurrentScreen('preview');
-      toast.success('הטופס נוצר בה��לחה!');
+      toast.success('הטופס נוצר בהצלחה!');
     } catch (error) {
       console.error('Failed to process PDF:', error);
-      toast.error('א��רעה שגיאה ביצירת המסמך. אנא נסה שנית');
+      toast.error('אירעה שגיאה ביצירת המסמך. אנא נסה שנית');
     } finally {
       setIsProcessing(false);
     }
@@ -154,6 +159,11 @@ const Index = () => {
   const getPreviewData = (): PreviewFormData | null => {
     if (!formData) return null;
     
+    let payerId = formData.idNumber;
+    if (formData.includeSpouse && spouseData && paymentData?.cardholderType === 'spouse') {
+      payerId = spouseData.idNumber;
+    }
+    
     return {
       idNumber: formData.idNumber,
       firstName: formData.firstName,
@@ -172,7 +182,10 @@ const Index = () => {
       signature: formData.signature,
       includeSpouse: formData.includeSpouse,
       spouse: spouseData || undefined,
-      payment: paymentData || undefined
+      payment: paymentData ? {
+        ...paymentData,
+        payerId: payerId
+      } : undefined
     };
   };
 

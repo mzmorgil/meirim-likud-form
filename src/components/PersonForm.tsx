@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,8 +25,8 @@ const basePersonFormSchema = z.object({
   maritalStatus: z.string().min(1, { message: "יש לבחור מצב משפחתי" }),
   birthCountry: z.string().min(2, { message: "יש לבחור ארץ לידה" }),
   immigrationYear: z.string().optional()
-    .refine(val => !val || (Number(val) >= 1948 && Number(val) <= currentYear), {
-      message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
+    .refine(val => !val || (Number(val) >= 1900 && Number(val) <= currentYear), {
+      message: `שנת עלייה חייבת להיות בין 1900 ל-${currentYear}`,
       path: ["immigrationYear"]
     }),
   mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),

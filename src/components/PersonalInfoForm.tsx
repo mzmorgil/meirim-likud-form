@@ -316,7 +316,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   placeholder="הכנס שנת עלייה" 
                   {...field} 
                   type="number"
-                  min="1948"
+                  min="1900"
                   max={currentYear.toString()}
                   className="transition-all focus:ring-2 text-right"
                   disabled={isLoading}

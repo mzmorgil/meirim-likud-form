@@ -33,7 +33,8 @@ interface PDFPreviewProps {
       cardholderType?: string;
       expiryDate: string;
       cvv: string;
-      paymentSignature?: string; 
+      paymentSignature?: string;
+      payerId?: string;
     };
   };
   onBack: () => void;
@@ -125,6 +126,13 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
     return `${day}/${month}/${year}`;
   };
 
+  const getPayerId = () => {
+    if (formData.payment?.cardholderType === 'spouse' && formData.spouse) {
+      return formData.spouse.idNumber;
+    }
+    return formData.idNumber;
+  };
+
   return (
     <div className="glass p-4 rounded-2xl shadow-lg animate-fade-in max-w-3xl mx-auto" dir="rtl">
       <div className="space-y-1 mb-3">
@@ -176,6 +184,9 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
                 <li><span className="font-semibold">שם האב:</span> {formData.spouse.fatherName}</li>
                 <li><span className="font-semibold">תאריך לידה:</span> {formatBirthDate(formData.spouse.birthDate)}</li>
                 <li><span className="font-semibold">מין:</span> {getGenderLabel(formData.spouse.gender)}</li>
+                {formData.spouse.maritalStatus && (
+                  <li><span className="font-semibold">מצב משפחתי:</span> {getMaritalStatusLabel(formData.spouse.maritalStatus)}</li>
+                )}
                 <li><span className="font-semibold">ארץ לידה:</span> {formData.spouse.birthCountry}</li>
                 {formData.spouse.immigrationYear && (
                   <li><span className="font-semibold">שנת עלייה:</span> {formData.spouse.immigrationYear}</li>
@@ -195,6 +206,7 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
             <h2 className="font-medium mb-2">פרטי תשלום</h2>
             <ul className="space-y-1 text-sm">
               <li><span className="font-semibold">שם בעל הכרטיס:</span> {formData.payment.cardholderName}</li>
+              <li><span className="font-semibold">ת.ז. משלם:</span> {getPayerId()}</li>
               <li><span className="font-semibold">מספר כרטיס:</span> <span dir="ltr" className="inline-block">{formatCreditCard(formData.payment.cardNumber)}</span></li>
               <li><span className="font-semibold">תוקף:</span> {formData.payment.expiryDate}</li>
               <li><span className="font-semibold">סכום לתשלום:</span> {getPaymentAmount()} ({getPaymentDescription()})</li>

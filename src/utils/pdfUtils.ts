@@ -1,4 +1,3 @@
-
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { PersonFormValues } from '@/components/PersonForm';
@@ -25,6 +24,10 @@ type FormFields = {
   maritalStatus?: FormPosition;
   birthCountry?: FormPosition;
   immigrationYear?: FormPosition;
+  // Add address fields positions
+  address?: FormPosition;
+  city?: FormPosition;
+  zipCode?: FormPosition;
   mobile?: FormPosition;
   emailUsername?: FormPosition;
   emailDomain?: FormPosition;
@@ -36,17 +39,23 @@ type FormFields = {
   spouseFatherName?: FormPosition;
   spouseBirthDate?: FormPosition;
   spouseGender?: FormPosition;
+  spouseMaritalStatus?: FormPosition;
   spouseBirthCountry?: FormPosition;
   spouseImmigrationYear?: FormPosition;
   spouseMobile?: FormPosition;
   spouseEmailUsername?: FormPosition;
   spouseEmailDomain?: FormPosition;
   spouseSignature?: FormPosition;
+  // Payment field positions
   paymentCardholderName?: FormPosition;
-  paymentCardNumber?: FormPosition;
-  paymentExpiryDate?: FormPosition;
-  paymentCVV?: FormPosition;
+  paymentCardNumber1?: FormPosition; // First group of 4 digits
+  paymentCardNumber2?: FormPosition; // Second group of 4 digits
+  paymentCardNumber3?: FormPosition; // Third group of 4 digits
+  paymentCardNumber4?: FormPosition; // Fourth group of 4 digits
+  paymentExpiryMonth?: FormPosition; // Month part of expiry
+  paymentExpiryYear?: FormPosition; // Year part of expiry
   paymentSignature?: FormPosition;
+  payerIdNumber?: FormPosition;
 };
 
 // Form field positions for an A4-sized PDF (595 x 842 points)
@@ -60,10 +69,14 @@ const FORM_FIELDS: FormFields = {
   maritalStatus: { x: 295, y: 670, fontSize: 10 },
   birthCountry: { x: 190, y: 658, fontSize: 10 },
   immigrationYear: { x: 100, y: 658, fontSize: 10 },
+  // Add address fields with positions
+  address: { x: 450, y: 632, fontSize: 10 },
+  city: { x: 190, y: 632, fontSize: 10 },
+  zipCode: { x: 80, y: 632, fontSize: 10 },
   mobile: { x: 470, y: 605, fontSize: 10 },
   emailUsername: { x: 280, y: 579, fontSize: 10 },
   emailDomain: { x: 430, y: 579, fontSize: 10 },
-  signature: { x: 80, y: 560, maxWidth: 150 },
+  signature: { x: 80, y: 570, maxWidth: 150 },
   // Spouse field positions - positioned below the primary applicant
   spouseIdNumber: { x: 495, y: 522, fontSize: 10 },
   spouseFirstName: { x: 175, y: 522, fontSize: 10 },
@@ -71,17 +84,23 @@ const FORM_FIELDS: FormFields = {
   spouseFatherName: { x: 480, y: 495, fontSize: 10 },
   spouseBirthDate: { x: 410, y: 507, fontSize: 10 },
   spouseGender: { x: 255, y: 507, fontSize: 10 },
+  spouseMaritalStatus: { x: 295, y: 507, fontSize: 10 },
   spouseBirthCountry: { x: 190, y: 495, fontSize: 10 },
   spouseImmigrationYear: { x: 100, y: 495, fontSize: 10 },
   spouseMobile: { x: 470, y: 469, fontSize: 10 },
   spouseEmailUsername: { x: 280, y: 445, fontSize: 10 },
   spouseEmailDomain: { x: 430, y: 445, fontSize: 10 },
-  spouseSignature: { x: 80, y: 420, maxWidth: 150 },
-  paymentCardholderName: { x: 300, y: 150, fontSize: 10 },
-  paymentCardNumber: { x: 300, y: 130, fontSize: 10 },
-  paymentExpiryDate: { x: 300, y: 110, fontSize: 10 },
-  paymentCVV: { x: 300, y: 90, fontSize: 10 },
-  paymentSignature: { x: 300, y: 70, maxWidth: 150 },
+  spouseSignature: { x: 80, y: 430, maxWidth: 150 },
+  // Payment field positions
+  paymentCardholderName: { x: 441, y: 342, fontSize: 10 },
+  paymentCardNumber1: { x: 310, y: 372, fontSize: 10 }, // First group position
+  paymentCardNumber2: { x: 360, y: 372, fontSize: 10 }, // Second group position
+  paymentCardNumber3: { x: 410, y: 372, fontSize: 10 }, // Third group position
+  paymentCardNumber4: { x: 460, y: 372, fontSize: 10 }, // Fourth group position
+  paymentExpiryMonth: { x: 220, y: 372, fontSize: 10 }, // Month part position
+  paymentExpiryYear: { x: 243, y: 372, fontSize: 10 }, // Year part position
+  paymentSignature: { x: 80, y: 320, maxWidth: 150 },
+  payerIdNumber: { x: 300, y: 342, fontSize: 10 },
 };
 
 // URL to the font file in the public directory
@@ -188,8 +207,8 @@ const addSignatureToPdf = async (
     throw new Error('Unsupported signature image format');
   }
 
-  // Scale the signature down to half size
-  const width = (position.maxWidth || 150) * 0.5;
+  // Increase signature size from 0.5 to 0.7 (70% of original size instead of 50%)
+  const width = (position.maxWidth || 150) * 0.7;
   const height = (width / embeddedImage.width) * embeddedImage.height;
 
   page.drawImage(embeddedImage, {
@@ -221,19 +240,40 @@ const formatBirthDateWith2DigitYear = (date: Date): string => {
 /**
  * Formats a credit card number into groups of 4 digits
  * @param cardNumber The card number to format
- * @returns Formatted card number with spaces between groups of 4 digits
+ * @returns Array of 4 groups of digits
  */
-const formatCreditCardNumber = (cardNumber: string): string => {
+const formatCreditCardNumber = (cardNumber: string): string[] => {
   // Remove any non-digit characters
   const digitsOnly = cardNumber.replace(/\D/g, '');
   
-  // Split into groups of 4 and join with spaces
+  // Split into groups of 4
   const groups = [];
   for (let i = 0; i < digitsOnly.length; i += 4) {
-    groups.push(digitsOnly.slice(i, i + 4));
+    groups.push(digitsOnly.slice(i, i + 4).padEnd(4, ' '));
   }
   
-  return groups.join(' ');
+  // Ensure we have 4 groups (pad if needed)
+  while (groups.length < 4) {
+    groups.push('    ');
+  }
+  
+  return groups;
+};
+
+/**
+ * Formats expiry date into MM and YY parts
+ * @param expiryDate The expiry date to format (MM/YY)
+ * @returns Array with [MM, YY]
+ */
+const formatExpiryDate = (expiryDate: string): string[] => {
+  const parts = expiryDate.split('/');
+  
+  if (parts.length === 2) {
+    return [parts[0], parts[1]];
+  }
+  
+  // Default fallback if format is not as expected
+  return ['MM', 'YY'];
 };
 
 /**
@@ -288,6 +328,7 @@ export const addFormDataToPdf = async (
       expiryDate: string;
       cvv: string;
       paymentSignature?: string;
+      payerId?: string;
     };
   },
   debug?: boolean
@@ -344,6 +385,14 @@ export const addFormDataToPdf = async (
     if (formData.immigrationYear) {
       await addTextToPdf(page, customFont, formData.immigrationYear, FORM_FIELDS.immigrationYear);
     }
+    
+    // Add address fields to the PDF
+    await addTextToPdf(page, customFont, formData.address, FORM_FIELDS.address);
+    await addTextToPdf(page, customFont, formData.city, FORM_FIELDS.city);
+    if (formData.zipCode) {
+      await addTextToPdf(page, customFont, formData.zipCode, FORM_FIELDS.zipCode);
+    }
+    
     await addTextToPdf(page, customFont, formData.mobile, FORM_FIELDS.mobile);
     
     // Add email as separate parts for better positioning
@@ -369,6 +418,9 @@ export const addFormDataToPdf = async (
       const spouseEmailUsername = spouseEmailParts[0] || '';
       const spouseEmailDomain = spouseEmailParts.length > 1 ? spouseEmailParts[1] : ''; // Remove @ symbol
 
+      // Convert spouse marital status to single character code
+      const spouseMaritalStatusCode = spouse.maritalStatus ? getMaritalStatusCode(spouse.maritalStatus) : '';
+
       // Add spouse data to PDF
       await addTextToPdf(page, customFont, spouse.idNumber || '', FORM_FIELDS.spouseIdNumber);
       await addTextToPdf(page, customFont, spouse.firstName || '', FORM_FIELDS.spouseFirstName);
@@ -376,6 +428,7 @@ export const addFormDataToPdf = async (
       await addTextToPdf(page, customFont, spouse.fatherName || '', FORM_FIELDS.spouseFatherName);
       await addTextToPdf(page, customFont, formattedSpouseBirthDate, FORM_FIELDS.spouseBirthDate);
       await addTextToPdf(page, customFont, spouse.gender || '', FORM_FIELDS.spouseGender);
+      await addTextToPdf(page, customFont, spouseMaritalStatusCode, FORM_FIELDS.spouseMaritalStatus); // Added spouse marital status
       await addTextToPdf(page, customFont, spouse.birthCountry || '', FORM_FIELDS.spouseBirthCountry);
       
       if (spouse.immigrationYear) {
@@ -395,15 +448,31 @@ export const addFormDataToPdf = async (
     // Add payment information if available
     if (formData.payment) {
       // Format the credit card number into groups of 4 digits
-      const formattedCardNumber = formatCreditCardNumber(formData.payment.cardNumber);
+      const cardNumberGroups = formatCreditCardNumber(formData.payment.cardNumber);
+      
+      // Format expiry date into MM/YY parts
+      const expiryParts = formatExpiryDate(formData.payment.expiryDate);
       
       // Add payment field values to the PDF
       await addTextToPdf(page, customFont, formData.payment.cardholderName, FORM_FIELDS.paymentCardholderName);
-      await addTextToPdf(page, customFont, formattedCardNumber, FORM_FIELDS.paymentCardNumber);
-      await addTextToPdf(page, customFont, formData.payment.expiryDate, FORM_FIELDS.paymentExpiryDate);
-      await addTextToPdf(page, customFont, formData.payment.cvv, FORM_FIELDS.paymentCVV);
       
-      // Add the appropriate signature to the payment section
+      // Add payer ID (use the provided payerId from payment data if available)
+      const payerId = formData.payment.payerId || formData.idNumber;
+      await addTextToPdf(page, customFont, payerId, FORM_FIELDS.payerIdNumber);
+      
+      // Add card number as 4 separate groups
+      await addTextToPdf(page, customFont, cardNumberGroups[0], FORM_FIELDS.paymentCardNumber1);
+      await addTextToPdf(page, customFont, cardNumberGroups[1], FORM_FIELDS.paymentCardNumber2);
+      await addTextToPdf(page, customFont, cardNumberGroups[2], FORM_FIELDS.paymentCardNumber3);
+      await addTextToPdf(page, customFont, cardNumberGroups[3], FORM_FIELDS.paymentCardNumber4);
+      
+      // Add expiry date as separate month and year
+      await addTextToPdf(page, customFont, expiryParts[0], FORM_FIELDS.paymentExpiryMonth);
+      await addTextToPdf(page, customFont, expiryParts[1], FORM_FIELDS.paymentExpiryYear);
+      
+      // CVV is not required in the PDF, so removed
+      
+      // Add the payment signature if provided
       if (formData.payment.paymentSignature) {
         await addSignatureToPdf(pdfDoc, page, formData.payment.paymentSignature, FORM_FIELDS.paymentSignature);
       }
