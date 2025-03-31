@@ -66,9 +66,10 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   const showImmigrationYear = watchBirthCountry !== 'ישראל';
   const nameId = formPrefix ? `${formPrefix}-` : '';
 
+  // Fixed the infinite loop by removing setShowImmigrationYear from dependency array
   useEffect(() => {
     setShowImmigrationYear(watchBirthCountry !== 'ישראל');
-  }, [watchBirthCountry, setShowImmigrationYear]);
+  }, [watchBirthCountry]); // Removed setShowImmigrationYear from dependencies
 
   const clearSignature = () => {
     if (signatureRef.current) {
