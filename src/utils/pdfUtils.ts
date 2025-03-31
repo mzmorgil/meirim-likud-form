@@ -85,7 +85,7 @@ const FORM_FIELDS: FormFields = {
   spouseEmailDomain: { x: 430, y: 445, fontSize: 10 },
   spouseSignature: { x: 80, y: 430, maxWidth: 150 }, // Moved up 5 points on y-axis
   // Payment field positions
-  paymentCardholderName: { x: 440, y: 340, fontSize: 10 },
+  paymentCardholderName: { x: 441, y: 340, fontSize: 10 },
   paymentCardNumber1: { x: 270, y: 130, fontSize: 10 }, // First group position
   paymentCardNumber2: { x: 320, y: 130, fontSize: 10 }, // Second group position
   paymentCardNumber3: { x: 370, y: 130, fontSize: 10 }, // Third group position
