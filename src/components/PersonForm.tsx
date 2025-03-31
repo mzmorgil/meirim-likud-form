@@ -93,6 +93,11 @@ const PersonForm: React.FC<PersonFormProps> = ({
   const watchBirthCountry = form.watch('birthCountry');
   const watchIncludeSpouse = isPrimary ? form.watch('includeSpouse') : false;
 
+  // Set showImmigrationYear based on birthCountry
+  useEffect(() => {
+    setShowImmigrationYear(watchBirthCountry !== 'ישראל');
+  }, [watchBirthCountry]);
+
   // Load the Hebrew handwriting font
   useEffect(() => {
     const loadFont = async () => {
@@ -199,7 +204,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
               includeMaritalStatus={true}
               generateAutoSignature={generateAutoSignature}
               watchBirthCountry={watchBirthCountry}
-              setShowImmigrationYear={setShowImmigrationYear}
+              showImmigrationYear={showImmigrationYear}
             />
 
             {isPrimary && (

@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -49,7 +48,7 @@ interface PersonalInfoFormProps {
   includeMaritalStatus?: boolean;
   generateAutoSignature?: (firstName: string, lastName: string) => void;
   watchBirthCountry: string;
-  setShowImmigrationYear: (show: boolean) => void;
+  showImmigrationYear: boolean;
 }
 
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
@@ -59,22 +58,11 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   includeMaritalStatus = false,
   generateAutoSignature,
   watchBirthCountry,
-  setShowImmigrationYear
+  showImmigrationYear
 }) => {
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const signatureRef = useRef<SignatureCanvas>(null);
-  const showImmigrationYear = watchBirthCountry !== 'ישראל';
   const nameId = formPrefix ? `${formPrefix}-` : '';
-
-  // Fixed the issue by using a useEffect with a proper dependency array
-  // and removing the setShowImmigrationYear from the dependency array
-  useEffect(() => {
-    if (watchBirthCountry !== 'ישראל') {
-      setShowImmigrationYear(true);
-    } else {
-      setShowImmigrationYear(false);
-    }
-  }, [watchBirthCountry]); // Only depend on watchBirthCountry, not on setShowImmigrationYear
 
   const clearSignature = () => {
     if (signatureRef.current) {
@@ -228,7 +216,10 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               >
                 {genderOptions.map(option => (
                   <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
-                    <RadioGroupItem value={option.value} id={`${nameId}gender-${option.value}`} />
+                    <RadioGroupItem 
+                      value={option.value} 
+                      id={`${nameId}gender-${option.value}`} 
+                    />
                     <FormLabel
                       htmlFor={`${nameId}gender-${option.value}`}
                       className="font-normal cursor-pointer"

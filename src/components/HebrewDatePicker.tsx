@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -30,6 +29,11 @@ const theme = createTheme(
   },
   heIL
 );
+
+// Create a wrapper component to prevent data attributes from being passed to ThemeProvider
+const MaterialThemeProvider: React.FC<{children: React.ReactNode}> = ({children}) => {
+  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+};
 
 interface HebrewDatePickerProps {
   value: Date | null;
@@ -77,9 +81,9 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
   const hebrewDateText = value ? getHebrewDateText(value) : '';
   
   return (
-    <ThemeProvider theme={theme}>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
-        <div className={`${className} flex flex-col`}>
+    <div className={`${className} flex flex-col`}>
+      <MaterialThemeProvider>
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
           <DatePicker
             value={dayjsValue}
             onChange={handleDateChange}
@@ -118,9 +122,9 @@ const HebrewDatePicker: React.FC<HebrewDatePickerProps> = ({
               {helperText}
             </div>
           )}
-        </div>
-      </LocalizationProvider>
-    </ThemeProvider>
+        </LocalizationProvider>
+      </MaterialThemeProvider>
+    </div>
   );
 };
 
