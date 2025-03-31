@@ -22,6 +22,7 @@ const SpouseForm: React.FC<SpouseFormProps> = ({ onSubmit, onBack, isLoading = f
       onBack={onBack}
       isLoading={isLoading}
       title="הזנת פרטי בן/בת הזוג"
+      includeAddressFields={false} // This is the key change - don't include address fields in spouse form
     />
   );
 };

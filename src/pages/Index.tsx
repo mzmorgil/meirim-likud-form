@@ -186,7 +186,7 @@ const Index = () => {
             דורית יצחק
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight animate-fade-up">
-            התפקדות לליכ��ד
+            התפקדות לליכוד
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
             {currentScreen === 'thankYou' && formData 

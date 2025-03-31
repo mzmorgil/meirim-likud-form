@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +10,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw, Heart, ArrowRight } from 'lucide-react';
 import PersonalInfoForm, { currentYear, isValidIsraeliID, maritalStatusOptions } from './PersonalInfoForm';
 
-// Create a common form schema that can be used for both primary applicant and spouse
-export const personFormSchema = z.object({
+// Create a base schema for common fields
+const basePersonFormSchema = z.object({
   idNumber: z.string()
     .min(5, { message: "מספר תעודת זהות חייב להכיל לפחות 5 ספרות" })
     .max(9, { message: "מספר תעודת זהות לא יכול להכיל יותר מ-9 ספרות" })
@@ -29,16 +30,24 @@ export const personFormSchema = z.object({
       message: `שנת עלייה חייבת להיות בין 1948 ל-${currentYear}`,
       path: ["immigrationYear"]
     }),
-  address: z.string().min(2, { message: "כתובת חייבת להכיל לפחות 2 תווים" }),
-  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
-  zipCode: z.string().optional(),
   mobile: z.string().min(9, { message: "מספר טלפון נייד חייב להכיל לפחות 9 ספרות" }),
   email: z.string().email({ message: "כתובת דואר אלקטרוני אינה תקינה" }),
   signature: z.string().min(1, { message: "חתימה נדרשת" }),
 });
 
-// Extend the schema for primary applicant to include the spouse checkbox
-export const primaryFormSchema = personFormSchema.extend({
+// Create address schema
+const addressSchema = z.object({
+  address: z.string().min(2, { message: "כתובת חייבת להכיל לפחות 2 תווים" }),
+  city: z.string().min(2, { message: "יישוב חייב להכיל לפחות 2 תווים" }),
+  zipCode: z.string().optional(),
+});
+
+// Create schema with address fields
+export const personFormSchema = basePersonFormSchema;
+
+// Extend the schema for primary applicant to include the spouse checkbox and address fields
+export const primaryFormSchema = basePersonFormSchema.extend({
+  ...addressSchema.shape,
   includeSpouse: z.boolean().default(false),
 });
 
@@ -51,6 +60,7 @@ interface PersonFormProps {
   onBack?: () => void;
   isLoading?: boolean;
   title: string;
+  includeAddressFields?: boolean;
 }
 
 const PersonForm: React.FC<PersonFormProps> = ({ 
@@ -58,13 +68,32 @@ const PersonForm: React.FC<PersonFormProps> = ({
   onSubmit, 
   onBack, 
   isLoading = false,
-  title
+  title,
+  includeAddressFields = isPrimary // Default to isPrimary if not explicitly set
 }) => {
   const [showImmigrationYear, setShowImmigrationYear] = useState(false);
   const [fontLoaded, setFontLoaded] = useState(false);
   
-  // Use the appropriate schema based on whether this is the primary form
-  const formSchema = isPrimary ? primaryFormSchema : personFormSchema;
+  // Use dynamic schema based on whether we need address fields
+  const getDynamicSchema = () => {
+    const baseSchema = isPrimary ? primaryFormSchema : basePersonFormSchema;
+    
+    // If it's not primary and we don't include address fields, use the base schema
+    if (!isPrimary && !includeAddressFields) {
+      return baseSchema;
+    }
+    
+    // If it's not primary but we do include address fields, extend the base schema
+    if (!isPrimary && includeAddressFields) {
+      return baseSchema.extend(addressSchema.shape);
+    }
+    
+    // For primary forms, the schema already includes address fields
+    return baseSchema;
+  };
+  
+  // Get the appropriate schema
+  const formSchema = getDynamicSchema();
   
   const form = useForm<any>({
     resolver: zodResolver(formSchema),
@@ -78,9 +107,11 @@ const PersonForm: React.FC<PersonFormProps> = ({
       maritalStatus: '', 
       birthCountry: 'ישראל',
       immigrationYear: '',
-      address: '',
-      city: '',
-      zipCode: '',
+      ...(includeAddressFields ? {
+        address: '',
+        city: '',
+        zipCode: '',
+      } : {}),
       mobile: '',
       email: '',
       signature: '',
@@ -222,7 +253,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
               isLoading={isLoading}
               formPrefix=""
               includeMaritalStatus={true}
-              includeAddressFields={isPrimary}
+              includeAddressFields={includeAddressFields}
               generateAutoSignature={generateAutoSignature}
               watchBirthCountry={watchBirthCountry}
               showImmigrationYear={showImmigrationYear}
