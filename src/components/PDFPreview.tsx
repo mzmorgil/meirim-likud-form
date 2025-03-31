@@ -1,10 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { downloadPdf } from "@/utils/pdfUtils";
 import { uploadFormFiles } from "@/utils/uploadUtils";
 import { useState } from "react";
-import { PersonFormValues } from "./PersonForm";
+import { PersonFormValues, SpouseFormValues } from "./PersonForm";
 
 interface PDFPreviewProps {
   pdfUrl: string | null;
@@ -26,7 +27,7 @@ interface PDFPreviewProps {
     email: string;
     signature: string;
     includeSpouse?: boolean;
-    spouse?: PersonFormValues; // Using the non-partial type for the preview
+    spouse?: SpouseFormValues; // Using the spouse form values without address fields
     payment?: {
       cardNumber: string;
       cardholderName: string;
@@ -64,7 +65,11 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
         birthDate: formData.birthDate.toISOString(),
         spouse: formData.spouse ? {
           ...formData.spouse,
-          birthDate: formData.spouse.birthDate.toISOString()
+          birthDate: formData.spouse.birthDate.toISOString(),
+          // Use primary user's address for the spouse in the backend
+          address: formData.address,
+          city: formData.city,
+          zipCode: formData.zipCode
         } : undefined,
         payment: formData.payment
       };
@@ -200,11 +205,6 @@ const PDFPreview = ({ pdfUrl, pdfBlob, formData, onBack, onUploadSuccess }: PDFP
               </ul>
               
               <ul className="space-y-1 text-sm">
-                <li><span className="font-semibold">כתובת:</span> {formData.spouse.address}</li>
-                <li><span className="font-semibold">יישוב:</span> {formData.spouse.city}</li>
-                {formData.spouse.zipCode && (
-                  <li><span className="font-semibold">מיקוד:</span> {formData.spouse.zipCode}</li>
-                )}
                 <li><span className="font-semibold">טלפון נייד:</span> {formData.spouse.mobile}</li>
                 <li><span className="font-semibold">דואר אלקטרוני:</span> {formData.spouse.email}</li>
               </ul>

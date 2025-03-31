@@ -1,9 +1,9 @@
 
 import React from 'react';
-import PersonForm, { PersonFormValues } from './PersonForm';
+import PersonForm, { SpouseFormValues } from './PersonForm';
 
 interface SpouseFormProps {
-  onSubmit: (data: PersonFormValues) => void;
+  onSubmit: (data: SpouseFormValues) => void;
   onBack: () => void;
   isLoading?: boolean;
 }

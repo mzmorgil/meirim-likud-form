@@ -1,12 +1,12 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { PersonFormValues, PrimaryFormValues } from '@/components/PersonForm';
+import { PersonFormValues, PrimaryFormValues, SpouseFormValues } from '@/components/PersonForm';
 
 type FormContextType = {
   primaryUserData: PrimaryFormValues | null;
-  spouseData: PersonFormValues | null;
+  spouseData: SpouseFormValues | null;
   setPrimaryUserData: (data: PrimaryFormValues) => void;
-  setSpouseData: (data: PersonFormValues) => void;
+  setSpouseData: (data: SpouseFormValues) => void;
 };
 
 const FormContext = createContext<FormContextType>({
@@ -20,7 +20,7 @@ export const FormProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const [primaryUserData, setPrimaryUserData] = useState<PrimaryFormValues | null>(null);
-  const [spouseData, setSpouseData] = useState<PersonFormValues | null>(null);
+  const [spouseData, setSpouseData] = useState<SpouseFormValues | null>(null);
 
   return (
     <FormContext.Provider

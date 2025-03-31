@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { addFormDataToPdf, downloadPdf } from '@/utils/pdfUtils';
 import NameForm from '@/components/NameForm';
@@ -6,14 +7,13 @@ import PaymentForm from '@/components/PaymentForm';
 import PDFPreview from '@/components/PDFPreview';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
-import { PrimaryFormValues, PersonFormValues } from '@/components/PersonForm';
+import { PrimaryFormValues, PersonFormValues, SpouseFormValues } from '@/components/PersonForm';
 import { FormProvider, useFormContext } from '@/hooks/use-form-context';
 import { PaymentFormValues } from '@/components/PaymentForm';
 
 const PDF_URL = 'https://mzm-org-il-public.storage.googleapis.com/uc-register-to-likud-black-v2.pdf';
 
 type FormData = PrimaryFormValues;
-type SpouseData = PersonFormValues;
 
 interface PaymentData {
   cardNumber: string;
@@ -40,19 +40,19 @@ interface PDFFormData {
   mobile: string;
   email: string;
   signature: string;
-  spouse?: Partial<PersonFormValues>;
+  spouse?: Partial<SpouseFormValues>;
   payment?: PaymentData;
   includeSpouse?: boolean;
 }
 
 interface PreviewFormData extends Omit<PDFFormData, 'spouse'> {
-  spouse?: PersonFormValues;
+  spouse?: SpouseFormValues;
   payment?: PaymentData;
 }
 
 const Index = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
-  const [spouseData, setSpouseData] = useState<SpouseData | null>(null);
+  const [spouseData, setSpouseData] = useState<SpouseFormValues | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [currentScreen, setCurrentScreen] = useState<'form' | 'spouseForm' | 'paymentForm' | 'preview' | 'thankYou'>('form');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -72,7 +72,7 @@ const Index = () => {
     }
   };
 
-  const handleSpouseFormSubmit = (data: SpouseData) => {
+  const handleSpouseFormSubmit = (data: SpouseFormValues) => {
     setSpouseData(data);
     setFormContextSpouseData(data);
     setCurrentScreen('paymentForm');

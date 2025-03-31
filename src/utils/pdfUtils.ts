@@ -1,6 +1,6 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { PersonFormValues } from '@/components/PersonForm';
+import { PersonFormValues, SpouseFormValues } from '@/components/PersonForm';
 
 // Debug mode can be enabled via environment variable or directly in code
 const DEBUG_PDF_GRID = import.meta.env.VITE_DEBUG_PDF_GRID === 'true' || false;
@@ -40,9 +40,6 @@ type FormFields = {
   spouseGender?: FormPosition;
   spouseBirthCountry?: FormPosition;
   spouseImmigrationYear?: FormPosition;
-  spouseAddress?: FormPosition;
-  spouseCity?: FormPosition;
-  spouseZipCode?: FormPosition;
   spouseMobile?: FormPosition;
   spouseEmailUsername?: FormPosition;
   spouseEmailDomain?: FormPosition;
@@ -81,9 +78,6 @@ const FORM_FIELDS: FormFields = {
   spouseGender: { x: 255, y: 507, fontSize: 10 },
   spouseBirthCountry: { x: 190, y: 495, fontSize: 10 },
   spouseImmigrationYear: { x: 100, y: 495, fontSize: 10 },
-  spouseAddress: { x: 480, y: 469, fontSize: 10 },
-  spouseCity: { x: 270, y: 469, fontSize: 10 },
-  spouseZipCode: { x: 130, y: 469, fontSize: 10 },
   spouseMobile: { x: 470, y: 469, fontSize: 10 },
   spouseEmailUsername: { x: 280, y: 442, fontSize: 10 },
   spouseEmailDomain: { x: 430, y: 442, fontSize: 10 },
@@ -292,7 +286,7 @@ export const addFormDataToPdf = async (
     mobile: string;
     email: string;
     signature: string;
-    spouse?: Partial<PersonFormValues>;
+    spouse?: Partial<SpouseFormValues>;
     payment?: {
       cardNumber: string;
       cardholderName: string;
@@ -385,7 +379,7 @@ export const addFormDataToPdf = async (
       const spouseEmailUsername = spouseEmailParts[0] || '';
       const spouseEmailDomain = spouseEmailParts.length > 1 ? spouseEmailParts[1] : ''; // Remove @ symbol
 
-      // Add spouse data to PDF
+      // Add spouse data to PDF - without address fields
       await addTextToPdf(page, customFont, spouse.idNumber || '', FORM_FIELDS.spouseIdNumber);
       await addTextToPdf(page, customFont, spouse.firstName || '', FORM_FIELDS.spouseFirstName);
       await addTextToPdf(page, customFont, spouse.lastName || '', FORM_FIELDS.spouseLastName);
@@ -398,11 +392,11 @@ export const addFormDataToPdf = async (
         await addTextToPdf(page, customFont, spouse.immigrationYear, FORM_FIELDS.spouseImmigrationYear);
       }
       
-      await addTextToPdf(page, customFont, spouse.address || '', FORM_FIELDS.spouseAddress);
-      await addTextToPdf(page, customFont, spouse.city || '', FORM_FIELDS.spouseCity);
-      
-      if (spouse.zipCode) {
-        await addTextToPdf(page, customFont, spouse.zipCode, FORM_FIELDS.spouseZipCode);
+      // Use primary user's address for the spouse on the PDF
+      await addTextToPdf(page, customFont, formData.address, FORM_FIELDS.address);
+      await addTextToPdf(page, customFont, formData.city, FORM_FIELDS.city);
+      if (formData.zipCode) {
+        await addTextToPdf(page, customFont, formData.zipCode, FORM_FIELDS.zipCode);
       }
       
       await addTextToPdf(page, customFont, spouse.mobile || '', FORM_FIELDS.spouseMobile);
