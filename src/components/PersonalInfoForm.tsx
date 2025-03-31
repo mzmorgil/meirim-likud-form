@@ -66,10 +66,15 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   const showImmigrationYear = watchBirthCountry !== 'ישראל';
   const nameId = formPrefix ? `${formPrefix}-` : '';
 
-  // Fixed the infinite loop by removing setShowImmigrationYear from dependency array
+  // Fixed the issue by using a useEffect with a proper dependency array
+  // and removing the setShowImmigrationYear from the dependency array
   useEffect(() => {
-    setShowImmigrationYear(watchBirthCountry !== 'ישראל');
-  }, [watchBirthCountry]); // Removed setShowImmigrationYear from dependencies
+    if (watchBirthCountry !== 'ישראל') {
+      setShowImmigrationYear(true);
+    } else {
+      setShowImmigrationYear(false);
+    }
+  }, [watchBirthCountry]); // Only depend on watchBirthCountry, not on setShowImmigrationYear
 
   const clearSignature = () => {
     if (signatureRef.current) {
@@ -217,8 +222,8 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             <FormControl>
               <RadioGroup
                 onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex flex-row space-x-4 space-x-reverse text-right"
+                value={field.value}
+                className="flex flex-row space-x-4 space-x-reverse rtl"
                 disabled={isLoading}
               >
                 {genderOptions.map(option => (
@@ -251,7 +256,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               </FormLabel>
               <Select 
                 onValueChange={field.onChange} 
-                defaultValue={field.value}
+                value={field.value}
                 disabled={isLoading}
               >
                 <FormControl>
@@ -284,7 +289,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             </FormLabel>
             <Select 
               onValueChange={field.onChange} 
-              defaultValue={field.value}
+              value={field.value}
               disabled={isLoading}
             >
               <FormControl>
