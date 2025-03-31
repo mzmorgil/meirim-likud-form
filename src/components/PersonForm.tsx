@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,25 +37,17 @@ export const personFormSchema = z.object({
   signature: z.string().min(1, { message: "חתימה נדרשת" }),
 });
 
-// Create a schema specifically for spouse that doesn't require address, city, and zipCode
-export const spouseFormSchema = personFormSchema.omit({ 
-  address: true, 
-  city: true, 
-  zipCode: true 
-});
-
 // Extend the schema for primary applicant to include the spouse checkbox
 export const primaryFormSchema = personFormSchema.extend({
   includeSpouse: z.boolean().default(false),
 });
 
 export type PersonFormValues = z.infer<typeof personFormSchema>;
-export type SpouseFormValues = z.infer<typeof spouseFormSchema>;
 export type PrimaryFormValues = z.infer<typeof primaryFormSchema>;
 
 interface PersonFormProps {
   isPrimary?: boolean;
-  onSubmit: (data: PersonFormValues | PrimaryFormValues | SpouseFormValues) => void;
+  onSubmit: (data: PersonFormValues | PrimaryFormValues) => void;
   onBack?: () => void;
   isLoading?: boolean;
   title: string;
@@ -72,8 +63,8 @@ const PersonForm: React.FC<PersonFormProps> = ({
   const [showImmigrationYear, setShowImmigrationYear] = useState(false);
   const [fontLoaded, setFontLoaded] = useState(false);
   
-  // Use the appropriate schema based on whether this is the primary form or spouse form
-  const formSchema = isPrimary ? primaryFormSchema : spouseFormSchema;
+  // Use the appropriate schema based on whether this is the primary form
+  const formSchema = isPrimary ? primaryFormSchema : personFormSchema;
   
   const form = useForm<any>({
     resolver: zodResolver(formSchema),
@@ -87,11 +78,9 @@ const PersonForm: React.FC<PersonFormProps> = ({
       maritalStatus: '', 
       birthCountry: 'ישראל',
       immigrationYear: '',
-      ...(isPrimary ? {
-        address: '',
-        city: '',
-        zipCode: '',
-      } : {}),
+      address: '',
+      city: '',
+      zipCode: '',
       mobile: '',
       email: '',
       signature: '',
@@ -203,7 +192,6 @@ const PersonForm: React.FC<PersonFormProps> = ({
               generateAutoSignature={generateAutoSignature}
               watchBirthCountry={watchBirthCountry}
               setShowImmigrationYear={setShowImmigrationYear}
-              isSpouse={!isPrimary}
             />
 
             {isPrimary && (
@@ -211,10 +199,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
                 control={form.control}
                 name="includeSpouse"
                 render={({ field }) => (
-                  <FormItem 
-                    className="flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
-                    onClick={() => field.onChange(!field.value)}
-                  >
+                  <FormItem className="flex flex-row items-start space-x-3 space-x-reverse space-y-0 rounded-md border p-4">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -222,12 +207,12 @@ const PersonForm: React.FC<PersonFormProps> = ({
                         disabled={isLoading}
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none flex-1">
-                      <FormLabel className="flex items-center gap-2 cursor-pointer">
-                        <Heart className={`h-4 w-4 ${field.value ? 'text-rose-500' : 'text-muted-foreground'}`} />
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-rose-500" />
                         הוסף התפקדות לבן/בת זוג
                       </FormLabel>
-                      <p className={`text-sm ${field.value ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <p className="text-sm text-muted-foreground">
                         סמן כאן אם ברצונך להוסיף התפקדות עבור בן/בת הזוג שלך
                       </p>
                     </div>

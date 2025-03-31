@@ -1,21 +1,17 @@
 
-import React, { useEffect, useState } from 'react';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { he } from 'date-fns/locale';
-import { countries } from '@/utils/countryData';
+import { Input } from '@/components/ui/input';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import SignatureCanvas from 'react-signature-canvas';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import HebrewDatePicker from '@/components/HebrewDatePicker';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { z } from 'zod';
 import { Control } from 'react-hook-form';
-
-export const currentYear = new Date().getFullYear();
+import { Hash, User, UserRound, Calendar as CalendarIcon, Flag, Mail, Phone, Home, Signature, Users } from 'lucide-react';
+import SignatureCanvas from 'react-signature-canvas';
+import { countries } from '@/utils/countryData';
 
 export const genderOptions = [
   { value: 'ז', label: 'זכר' },
@@ -23,289 +19,249 @@ export const genderOptions = [
 ];
 
 export const maritalStatusOptions = [
-  { value: 'ר', label: 'רווק/ה' },
-  { value: 'נ', label: 'נשוי/אה' },
-  { value: 'ג', label: 'גרוש/ה' },
-  { value: 'א', label: 'אלמן/ה' },
+  { value: 'ר', label: 'רווק/ה', fullLabel: 'רווק/ה' },
+  { value: 'נ', label: 'נשוי/אה', fullLabel: 'נשוי/אה' },
+  { value: 'ג', label: 'גרוש/ה', fullLabel: 'גרוש/ה' },
+  { value: 'א', label: 'אלמן/ה', fullLabel: 'אלמן/ה' },
 ];
 
-export const isValidIsraeliID = (id: string): boolean => {
-  id = id.replace(/\D/g, '');
-  
-  if (id.length < 5) return false;
-  if (id.length > 9) return false;
-  
-  id = id.padStart(9, '0');
-  
-  if (id.length === 9) {
-    let sum = 0;
-    for (let i = 0; i < 9; i++) {
-      let digit = parseInt(id.charAt(i), 10);
-      if (i % 2 === 0) {
-        digit *= 1;
-      } else {
-        digit *= 2;
-        if (digit > 9) {
-          digit = digit - 9;
-        }
-      }
-      sum += digit;
-    }
-    return (sum % 10 === 0);
-  }
-  
-  return true;
+export const currentYear = new Date().getFullYear();
+
+// Export the ID validation function for reuse
+export const isValidIsraeliID = (id: string) => {
+  const cleanId = String(id).trim();
+  if (cleanId.length > 9 || cleanId.length < 5 || isNaN(Number(cleanId))) return false;
+
+  const paddedId = cleanId.length < 9 ? ("00000000" + cleanId).slice(-9) : cleanId;
+
+  return Array
+    .from(paddedId, Number)
+    .reduce((counter, digit, i) => {
+      const step = digit * ((i % 2) + 1);
+      return counter + (step > 9 ? step - 9 : step);
+    }, 0) % 10 === 0;
 };
 
 interface PersonalInfoFormProps {
   control: Control<any>;
-  isLoading: boolean;
+  isLoading?: boolean;
   formPrefix?: string;
   includeMaritalStatus?: boolean;
   generateAutoSignature?: (firstName: string, lastName: string) => void;
-  watchBirthCountry?: string;
-  setShowImmigrationYear?: (show: boolean) => void;
-  isSpouse?: boolean;
+  watchBirthCountry: string;
+  setShowImmigrationYear: (show: boolean) => void;
 }
 
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   control,
-  isLoading,
-  formPrefix = '',
-  includeMaritalStatus = true,
+  isLoading = false,
+  formPrefix = "",
+  includeMaritalStatus = false,
   generateAutoSignature,
   watchBirthCountry,
-  setShowImmigrationYear,
-  isSpouse = false
+  setShowImmigrationYear
 }) => {
-  const [signatureRef, setSignatureRef] = useState<SignatureCanvas | null>(null);
-  
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const signatureRef = useRef<SignatureCanvas>(null);
+  const showImmigrationYear = watchBirthCountry !== 'ישראל';
+  const nameId = formPrefix ? `${formPrefix}-` : '';
+
   useEffect(() => {
-    if (setShowImmigrationYear && watchBirthCountry) {
-      setShowImmigrationYear(watchBirthCountry !== 'ישראל');
-    }
+    setShowImmigrationYear(watchBirthCountry !== 'ישראל');
   }, [watchBirthCountry, setShowImmigrationYear]);
 
-  const getFieldName = (name: string) => formPrefix ? `${formPrefix}.${name}` : name;
-
   const clearSignature = () => {
-    if (signatureRef) {
-      signatureRef.clear();
+    if (signatureRef.current) {
+      signatureRef.current.clear();
     }
   };
 
-  const saveSignature = (field: any) => {
-    if (signatureRef && !signatureRef.isEmpty()) {
-      const dataURL = signatureRef.toDataURL('image/png');
-      field.onChange(dataURL);
+  const saveSignature = () => {
+    if (signatureRef.current) {
+      const dataUrl = signatureRef.current.toDataURL('image/png');
+      return dataUrl;
     }
+    return '';
   };
+
+  const getFieldName = (name: string) => 
+    formPrefix ? `${formPrefix}.${name}` : name;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold mb-4">{isSpouse ? 'פרטי בן/בת הזוג' : 'פרטים אישיים'}</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name={getFieldName('idNumber')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>מספר תעודת זהות</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="מספר תעודת זהות" 
-                  {...field} 
-                  disabled={isLoading}
-                  dir="ltr"
-                  className="text-right"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={control}
-          name={getFieldName('firstName')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>שם פרטי</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="שם פרטי" 
-                  {...field} 
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={control}
-          name={getFieldName('lastName')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>שם משפחה</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="שם משפחה" 
-                  {...field} 
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={control}
-          name={getFieldName('fatherName')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>שם האב</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="שם האב" 
-                  {...field} 
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <FormField
-          control={control}
-          name={getFieldName('birthDate')}
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>תאריך לידה</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-right font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                      disabled={isLoading}
-                    >
-                      {field.value ? (
-                        format(field.value, "dd/MM/yyyy")
-                      ) : (
-                        <span>בחר תאריך</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    locale={he}
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={control}
-          name={getFieldName('gender')}
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>מין</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex flex-row gap-4"
-                  disabled={isLoading}
-                >
-                  {genderOptions.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
-                      <RadioGroupItem value={option.value} id={`${getFieldName('gender')}-${option.value}`} />
-                      <FormLabel htmlFor={`${getFieldName('gender')}-${option.value}`} className="font-normal cursor-pointer">
-                        {option.label}
-                      </FormLabel>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {includeMaritalStatus && (
-          <FormField
-            control={control}
-            name={getFieldName('maritalStatus')}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>מצב משפחתי</FormLabel>
-                <Select
-                  disabled={isLoading}
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחר מצב משפחתי" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {maritalStatusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name={getFieldName('birthCountry')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>ארץ לידה</FormLabel>
-              <Select
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <FormField
+        control={control}
+        name={getFieldName("idNumber")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Hash className="h-4 w-4" />
+              תעודת זהות
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס תעודת זהות" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
                 disabled={isLoading}
+                dir="rtl"
+                type="text"
+                inputMode="numeric"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("firstName")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              שם פרטי
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס שם פרטי" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("lastName")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              שם משפחה
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס שם משפחה" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("fatherName")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <UserRound className="h-4 w-4" />
+              שם האב
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס שם האב" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("birthDate")}
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              תאריך לידה
+            </FormLabel>
+            <FormControl>
+              <HebrewDatePicker
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isLoading}
+                error={false}
+                helperText=""
+                className="w-full"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("gender")}
+        render={({ field }) => (
+          <FormItem className="space-y-3">
+            <FormLabel>מין</FormLabel>
+            <FormControl>
+              <RadioGroup
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                className="flex flex-row space-x-4 space-x-reverse text-right"
+                disabled={isLoading}
+              >
+                {genderOptions.map(option => (
+                  <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value={option.value} id={`${nameId}gender-${option.value}`} />
+                    <FormLabel
+                      htmlFor={`${nameId}gender-${option.value}`}
+                      className="font-normal cursor-pointer"
+                    >
+                      {option.label}
+                    </FormLabel>
+                  </div>
+                ))}
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {includeMaritalStatus && (
+        <FormField
+          control={control}
+          name={getFieldName("maritalStatus")}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                מצב משפחתי
+              </FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+                disabled={isLoading}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="בחר ארץ לידה" />
+                    <SelectValue placeholder="בחר מצב משפחתי" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.code} value={country.name}>
-                      {country.name}
+                  {maritalStatusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.fullLabel}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -314,216 +270,262 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             </FormItem>
           )}
         />
-        
-        {watchBirthCountry && watchBirthCountry !== 'ישראל' && (
-          <FormField
-            control={control}
-            name={getFieldName('immigrationYear')}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>שנת עלייה</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="שנת עלייה"
-                    min="1948"
-                    max={currentYear}
-                    {...field}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-      </div>
-      
-      {!isSpouse && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <FormField
-              control={control}
-              name={getFieldName('address')}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>כתובת מלאה</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="רחוב ומספר בית" 
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <FormField
-            control={control}
-            name={getFieldName('city')}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>יישוב</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="יישוב" 
-                    {...field} 
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={control}
-            name={getFieldName('zipCode')}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>מיקוד (אופציונלי)</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="מיקוד" 
-                    {...field} 
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
       )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <FormField
+        control={control}
+        name={getFieldName("birthCountry")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Flag className="h-4 w-4" />
+              ארץ לידה
+            </FormLabel>
+            <Select 
+              onValueChange={field.onChange} 
+              defaultValue={field.value}
+              disabled={isLoading}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר ארץ לידה" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent className="max-h-[16rem]">
+                {countries.map((country) => (
+                  <SelectItem key={country.code} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {showImmigrationYear && (
         <FormField
           control={control}
-          name={getFieldName('mobile')}
+          name={getFieldName("immigrationYear")}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>טלפון נייד</FormLabel>
+              <FormLabel className="flex items-center gap-2">שנת עלייה</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="טלפון נייד" 
+                  placeholder="הכנס שנת עלייה" 
                   {...field} 
+                  type="number"
+                  min="1948"
+                  max={currentYear.toString()}
+                  className="transition-all focus:ring-2 text-right"
                   disabled={isLoading}
-                  dir="ltr"
-                  className="text-right"
+                  dir="rtl"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        <FormField
-          control={control}
-          name={getFieldName('email')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>דואר אלקטרוני</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="דואר אלקטרוני" 
-                  {...field} 
-                  disabled={isLoading}
-                  dir="ltr"
-                  type="email"
-                  className="text-right"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      )}
       
       <FormField
         control={control}
-        name={getFieldName('signature')}
+        name={getFieldName("address")}
+        render={({ field }) => (
+          <FormItem className="col-span-full">
+            <FormLabel className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              כתובת
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס כתובת מלאה" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("city")}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>חתימה</FormLabel>
+            <FormLabel>יישוב</FormLabel>
             <FormControl>
-              <div className="flex flex-col border rounded-md overflow-hidden">
+              <Input 
+                placeholder="הכנס יישוב" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("zipCode")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>מיקוד (אופציונלי)</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס מיקוד" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+                type="text"
+                inputMode="numeric"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("mobile")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              טלפון נייד
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס מספר טלפון נייד" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+                type="tel"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("email")}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              דואר אלקטרוני
+            </FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="הכנס כתובת דואר אלקטרוני" 
+                {...field} 
+                className="transition-all focus:ring-2 text-right"
+                disabled={isLoading}
+                dir="rtl"
+                type="email"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={getFieldName("signature")}
+        render={({ field }) => (
+          <FormItem className="col-span-full">
+            <FormLabel className="flex items-center gap-2 mb-2">
+              <Signature className="h-4 w-4" />
+              חתימה
+            </FormLabel>
+            <FormControl>
+              <div className="border rounded-md bg-white p-4 flex flex-col items-center">
                 {field.value ? (
-                  <div className="p-2 flex flex-col items-center">
-                    <div className="mb-2 w-full bg-gray-50 rounded p-2 flex justify-center">
-                      <img 
-                        src={field.value} 
-                        alt="חתימה" 
-                        className="max-h-20 max-w-full mix-blend-multiply" 
-                      />
-                    </div>
+                  <div className="flex flex-col items-center w-full">
+                    <img 
+                      src={field.value} 
+                      alt="חתימה" 
+                      className="max-h-[100px] mb-3"
+                    />
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => field.onChange('')}
-                      disabled={isLoading}
                       size="sm"
+                      onClick={() => setShowSignaturePad(true)}
+                      disabled={isLoading}
                     >
-                      החלף חתימה
+                      שנה חתימה
                     </Button>
                   </div>
                 ) : (
-                  <div className="p-2 flex flex-col">
-                    <div className="border rounded-md bg-white mb-2">
-                      <SignatureCanvas
-                        ref={(ref) => setSignatureRef(ref)}
-                        canvasProps={{
-                          width: 500,
-                          height: 150,
-                          className: 'w-full h-[150px] cursor-crosshair'
-                        }}
-                        backgroundColor="white"
-                      />
-                    </div>
-                    <div className="flex justify-between space-x-2 space-x-reverse">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={clearSignature}
-                        disabled={isLoading}
-                        size="sm"
-                      >
-                        נקה
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => saveSignature(field)}
-                        disabled={isLoading}
-                        size="sm"
-                      >
-                        שמור חתימה
-                      </Button>
-                      {generateAutoSignature && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => generateAutoSignature(
-                            control._formValues[getFieldName('firstName')],
-                            control._formValues[getFieldName('lastName')]
-                          )}
-                          disabled={
-                            isLoading || 
-                            !control._formValues[getFieldName('firstName')] || 
-                            !control._formValues[getFieldName('lastName')]
-                          }
-                          size="sm"
-                        >
-                          חתימה אוטומטית
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => setShowSignaturePad(true)}
+                    disabled={isLoading}
+                  >
+                    הוסף חתימה אישית
+                  </Button>
                 )}
+                <input 
+                  type="hidden" 
+                  {...field} 
+                />
               </div>
             </FormControl>
             <FormMessage />
+
+            <Dialog open={showSignaturePad} onOpenChange={setShowSignaturePad}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>הוסף חתימה</DialogTitle>
+                  <DialogDescription>
+                    חתום באמצעות העכבר או באצבע במכשיר מגע
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="border rounded-md bg-white p-1 h-[200px]">
+                  <SignatureCanvas
+                    ref={signatureRef}
+                    canvasProps={{
+                      width: 500,
+                      height: 198,
+                      className: 'w-full h-full signature-canvas'
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <Button
+                    type="button" 
+                    variant="outline"
+                    onClick={clearSignature}
+                  >
+                    נקה
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const dataUrl = saveSignature();
+                      field.onChange(dataUrl);
+                      setShowSignaturePad(false);
+                    }}
+                  >
+                    שמור חתימה
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </FormItem>
         )}
       />
