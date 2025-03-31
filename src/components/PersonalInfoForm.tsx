@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -10,21 +9,18 @@ import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { he } from 'date-fns/locale';
-import { countryList } from '@/utils/countryData';
+import { countries } from '@/utils/countryData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SignatureCanvas from 'react-signature-canvas';
 import { Control } from 'react-hook-form';
 
-// Current year for validation
 export const currentYear = new Date().getFullYear();
 
-// Gender options
 export const genderOptions = [
   { value: 'ז', label: 'זכר' },
   { value: 'נ', label: 'נקבה' },
 ];
 
-// Marital status options
 export const maritalStatusOptions = [
   { value: 'ר', label: 'רווק/ה' },
   { value: 'נ', label: 'נשוי/אה' },
@@ -32,19 +28,14 @@ export const maritalStatusOptions = [
   { value: 'א', label: 'אלמן/ה' },
 ];
 
-// Function to validate Israeli ID number (simple algorithm)
 export const isValidIsraeliID = (id: string): boolean => {
-  // Remove any non-digit characters
   id = id.replace(/\D/g, '');
   
-  // Israeli ID must be 9 digits, but we allow less for partial input
   if (id.length < 5) return false;
   if (id.length > 9) return false;
   
-  // If less than 9 digits, pad with leading zeros
   id = id.padStart(9, '0');
   
-  // Check digit calculation (for complete 9-digit IDs)
   if (id.length === 9) {
     let sum = 0;
     for (let i = 0; i < 9; i++) {
@@ -62,7 +53,7 @@ export const isValidIsraeliID = (id: string): boolean => {
     return (sum % 10 === 0);
   }
   
-  return true; // Allow partial valid IDs
+  return true;
 };
 
 interface PersonalInfoFormProps {
@@ -88,24 +79,20 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 }) => {
   const [signatureRef, setSignatureRef] = useState<SignatureCanvas | null>(null);
   
-  // Update immigration year visibility when birth country changes
   useEffect(() => {
     if (setShowImmigrationYear && watchBirthCountry) {
       setShowImmigrationYear(watchBirthCountry !== 'ישראל');
     }
   }, [watchBirthCountry, setShowImmigrationYear]);
 
-  // Calculate field names with optional prefix
   const getFieldName = (name: string) => formPrefix ? `${formPrefix}.${name}` : name;
 
-  // Clear signature pad
   const clearSignature = () => {
     if (signatureRef) {
       signatureRef.clear();
     }
   };
 
-  // Save signature from pad
   const saveSignature = (field: any) => {
     if (signatureRef && !signatureRef.isEmpty()) {
       const dataURL = signatureRef.toDataURL('image/png');
@@ -138,7 +125,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
           )}
         />
         
-        {/* Continue with first name, last name and father's name */}
         <FormField
           control={control}
           name={getFieldName('firstName')}
@@ -316,9 +302,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {countryList.map((country) => (
-                    <SelectItem key={country.value} value={country.label}>
-                      {country.label}
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.name}>
+                      {country.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -352,7 +338,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
         )}
       </div>
       
-      {/* Only show address fields for primary user (not spouse) */}
       {!isSpouse && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
@@ -514,7 +499,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                       >
                         שמור חתימה
                       </Button>
-                      {/* Add auto-generate signature button if available */}
                       {generateAutoSignature && (
                         <Button
                           type="button"
