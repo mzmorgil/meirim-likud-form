@@ -322,6 +322,7 @@ export const addFormDataToPdf = async (
       expiryDate: string;
       cvv: string;
       paymentSignature?: string;
+      payerId?: string; // Added payerId
     };
   },
   debug?: boolean
@@ -441,8 +442,9 @@ export const addFormDataToPdf = async (
       // Add payment field values to the PDF
       await addTextToPdf(page, customFont, formData.payment.cardholderName, FORM_FIELDS.paymentCardholderName);
       
-      // Add payer ID (same as primary user ID)
-      await addTextToPdf(page, customFont, formData.idNumber, FORM_FIELDS.payerIdNumber);
+      // Add payer ID (use the provided payerId from payment data if available)
+      const payerId = formData.payment.payerId || formData.idNumber;
+      await addTextToPdf(page, customFont, payerId, FORM_FIELDS.payerIdNumber);
       
       // Add card number as 4 separate groups
       await addTextToPdf(page, customFont, cardNumberGroups[0], FORM_FIELDS.paymentCardNumber1);
@@ -456,9 +458,9 @@ export const addFormDataToPdf = async (
       
       await addTextToPdf(page, customFont, formData.payment.cvv, FORM_FIELDS.paymentCVV);
       
-      // Add the primary user's signature to the payment section as well
-      if (formData.signature) {
-        await addSignatureToPdf(pdfDoc, page, formData.signature, FORM_FIELDS.paymentSignature);
+      // Add the payment signature if provided
+      if (formData.payment.paymentSignature) {
+        await addSignatureToPdf(pdfDoc, page, formData.payment.paymentSignature, FORM_FIELDS.paymentSignature);
       }
     }
 
